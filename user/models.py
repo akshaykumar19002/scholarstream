@@ -1,34 +1,19 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 from course.models import Course
 
 
-class UserModel(User):
+class UserModel(AbstractUser):
     TYPES = [
         ('S', 'Student'),
         ('I', 'Instructor'),
         ('GA', 'Graduate Assistant')
     ]
     user_type = models.CharField(max_length=2, choices=TYPES, default='S')
-
-
-class Instructor(UserModel):
-    user_type = 'I'
-    courses = models.ManyToManyField(Course)
+    courses = models.ManyToManyField(Course, null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Instructor'
+        verbose_name = 'User'
 
     def __str__(self):
-        return self.get_full_name()
-
-
-class Student(UserModel):
-    user_type = 'S'
-    courses = models.ManyToManyField(Course)
-
-    class Meta:
-        verbose_name = 'Student'
-
-    def __str__(self):
-        return self.get_full_name()
+        return self.get_full_name() + ' - ' + self.user_type

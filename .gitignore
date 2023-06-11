@@ -1,5 +1,5 @@
 venv
 *pycache*
 .idea
-.env
+scholarstream/.env
 .vscode

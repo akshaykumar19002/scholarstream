@@ -28,16 +28,29 @@
                     <a class="nav-link" href="{% url 'course:list'%}">Home <span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Categories</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'course:list' %}">My Courses</a>
+                    <a class="nav-link" href="{% url 'course:list' %}">Courses</a>
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0 ml-auto">
                 <input class="form-control mr-sm-2" type="search" placeholder="Search for courses" aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
+            &nbsp;
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'user:logout' %}"> <i class="fa fa-sign-out"></i> &nbsp; Logout </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'user:register' %}"> Register </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'user:login' %}"> Login </a>
+                    </li>
+                {% endif %}
+                &nbsp;
+            </ul>
         </div>
     </nav>
     <br>

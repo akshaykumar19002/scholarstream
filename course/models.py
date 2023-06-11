@@ -7,3 +7,5 @@ class Course(models.Model):
     is_paid = models.BooleanField(default=False)
     thumbnail = models.ImageField(upload_to='course-thumbnails/')
 
+    def __str__(self):
+        return self.name
