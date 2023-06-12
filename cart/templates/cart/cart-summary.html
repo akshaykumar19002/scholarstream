@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% load mathfilters %}
+
+{% block content %}
+
+<main class="pt-3">
+    <div class="container-fluid pl-3 ml-4 pr-3 mr-4">
+      <h3> Cart </h3>
+	  <hr>
+      <br>
+
+        {% for item in cart %}
+
+        {% with course=item.course %}
+
+        <div class="row mb-5 pb-3 pt-3 border course-item">
+  
+            <div class="col-md-3 col-lg-2 order-md-first bg-light">        
+                <img class="img img-fluid mx-auto d-block" width="200px" alt="Image" src="{{course.thumbnail.url}}">
+            </div>
+            
+            <div class="col-md-9 col-lg-10 ps-md-3 ps-lg-10">          
+                <a href="{{course.get_absolute_url}}" class="text-info text-decoration-none">
+                    <h1 class="h5 pt-2"> {{course.name}} </h1>
+                </a>
+                
+                <div class="border">
+                    <div class="col border-bottom">
+                        <div class="row p-3">
+                        <div class="col-6"> course </div>
+                        <div class="col-6 text-end"><span class="h6 fw-bold">$ {{course.price}} </span></div>
+                    </div>            
+                    </div>
+                    
+                    <div class="col">
+                    <div class="row p-3">
+                        <button type="button" data-index="{{course.id}}"
+                            class="btn btn-danger btn-sm delete-button">
+                            Delete
+                        </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+    
+        </div>
+
+        {% endwith %}
+        {% endfor %}
+        
+        </div>
+        
+        <div class="col-12 pl-3 ml-4 pr-3 mr-4 text-end">
+            <div class="h6 fw-bold"> Sub total: $ <div id="total" class="d-inline-flex"> {{cart.get_total_price}} </div></div>
+
+        <br>
+        
+            <a href="{% url 'payment:checkout' %}" class="btn btn-primary my-2"> <i class="fa fa-chevron-circle-right" aria-hidden="true"></i> &nbsp; Proceed to checkout </a>
+        </div>        
+        <br>
+
+    </div>
+  
+</main>
+
+<script>
+
+    // Delete Button
+    $(document).on('click', '.delete-button', function(e) {
+
+        e.preventDefault();
+
+        var course_id = $(this).data('index');
+        $.ajax({
+            url: "{% url 'cart:delete' %}",
+            type: "POST",
+            data: {
+                course_id: course_id,
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                action: 'post'
+            },
+            success: function(response) {
+                console.log(response);
+                location.reload(true);
+
+                document.getElementById("total").textContent = response.total;
+            },
+            error: function(xhr, errmsg, err) {
+                console.log(err);
+            }
+        });
+    });
+
+</script>
+
+{% endblock %}
+

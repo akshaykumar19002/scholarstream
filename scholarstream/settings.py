@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'storages',
     'user.apps.UserConfig',
     'course.apps.CourseConfig',
+    'paymemt.apps.PaymentConfig',
+    'cart.apps.CartConfig',
     'mathfilters',
     'crispy_forms',
     "crispy_bootstrap5",
@@ -80,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'cart.context_processors.cart'
             ],
         },
     },
