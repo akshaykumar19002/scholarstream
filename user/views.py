@@ -10,7 +10,9 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from .forms import UserRegisterForm, LoginForm, UpdateUserForm
+from django.contrib.auth import get_user_model
+
+from .forms import *
 from .token import user_tokenizer_generate
 
 class Register(View):
@@ -59,6 +61,7 @@ class Login(View):
             if user:
                 login(request, user)
                 return redirect('course:list')
+        return render(request, 'user/login.html', {'form': form})
 
 def email_verification(request, uidb64, token):
 
@@ -94,20 +97,6 @@ def user_logout(request):
 
     return redirect('user:login')
 
-@login_required(login_url='user:login')
-def profile_management(request):
-
-    form = UpdateUserForm(instance=request.user)
-
-    if request.method == 'POST':
-        form = UpdateUserForm(request.POST, instance=request.user)
-
-        if form.is_valid():
-            form.save()
-            messages.info(request, 'Your profile has been updated successfully.')
-            return redirect('course:list')
-
-    return render(request, 'user/profile-management.html', {'form': form})
 
 @login_required(login_url='user:login')
 def delete_user(request):
@@ -119,3 +108,45 @@ def delete_user(request):
         return redirect('course:list')
     
     return render(request, 'user/delete-user.html')
+
+
+@login_required(login_url='user:login')
+def user_profile(request):
+    User = get_user_model()
+    user = User.objects.get(id=request.user.id)
+    address = BillingAddress.objects.filter(user=user).first()
+
+    username_form = UpdateUsernameForm(request.POST or None, instance=user)
+    password_form = ChangePasswordForm(request.POST or None)
+    address_form = AddUpdateAddressForm(request.POST or None, instance=address)
+
+    print(request.POST)
+    if request.method == 'POST':
+        # Update username form
+        if 'username_form' in request.POST and username_form.is_valid():
+            username_form.save()
+
+        # Change password form
+        elif 'password_form' in request.POST and password_form.is_valid():
+            current_password = password_form.cleaned_data['currentPassword']
+            if user.check_password(current_password):
+                new_password = password_form.cleaned_data['newPassword']
+                user.set_password(new_password)
+                user.save()
+                user_logout(request)
+            else:
+                password_form.add_error('currentPassword', 'Current password is not correct')
+
+        # Add/Update address form
+        elif 'address_form' in request.POST and address_form.is_valid():
+            address = address_form.save(commit=False)
+            address.user = user
+            address.save()
+
+    context = {
+        'username_form': username_form,
+        'password_form': password_form,
+        'address_form': address_form
+    }
+
+    return render(request, 'user/profile.html', context)

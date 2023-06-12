@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'storages',
     'user.apps.UserConfig',
     'course.apps.CourseConfig',
-    'paymemt.apps.PaymentConfig',
+    'payment.apps.PaymentConfig',
     'cart.apps.CartConfig',
     'mathfilters',
     'crispy_forms',

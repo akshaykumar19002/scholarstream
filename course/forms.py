@@ -1,11 +1,11 @@
 from .models import Course
-from django.forms import ModelForm, TextInput, EmailInput, CheckboxInput, FileInput
+from django.forms import ModelForm, TextInput, NumberInput, FileInput
 
 
 class CourseForm(ModelForm):
     class Meta:
         model = Course
-        fields = ['name', 'description', 'is_paid', 'thumbnail']
+        fields = ['name', 'description', 'price', 'thumbnail']
         widgets = {
             'name': TextInput(attrs={
                 'class': 'form-control',
@@ -16,8 +16,10 @@ class CourseForm(ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Enter description for the course'
             }),
-            'is_paid': CheckboxInput(attrs={
-                'class': 'form-check-input'
+            'price': NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Price',
+                'aria-describedBy': 'priceHelpBlock'
             }),
             'thumbnail': FileInput(attrs={
                 'class': 'form-control'
@@ -26,11 +28,12 @@ class CourseForm(ModelForm):
         labels = {
             'name': 'Course Name',
             'description': 'Course Description',
-            'is_paid': 'Is this course paid?',
+            'is_paid': 'Course Price',
             'thumbnail': 'Course Thumbnail',
         }
         help_texts = {
             'name': 'Enter the name of the course.',
             'description': 'Enter a brief description of the course.',
+            'price': 'Enter the price of the course.',
             'thumbnail': 'Upload a thumbnail for the course.',
         }

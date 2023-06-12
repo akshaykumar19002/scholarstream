@@ -3,6 +3,8 @@ from .models import UserModel
 from django import forms
 from django.forms.widgets import PasswordInput, TextInput
 
+from payment.models import BillingAddress
+
 
 class UserRegisterForm(UserCreationForm):
     class Meta:
@@ -30,28 +32,105 @@ class LoginForm(AuthenticationForm):
     password = forms.CharField(widget=PasswordInput(attrs={'placeholder': 'Password'}))
     
 
-class UpdateUserForm(forms.ModelForm):
-    password = None
-
+class UpdateUsernameForm(forms.ModelForm):
     class Meta:
         model = UserModel
+        fields = ['username']
+        widgets = {
+            'username': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Username',
+                'aria-describedBy': 'usernameHelpBlock'
+            }),
+        }
+        labels = {
+            'username': 'Username',
+        }
+        help_texts = {
+            'usernameHelpBlock': 'Enter your new username.',
+        }
 
-        fields = ['username', 'email']
-        exclude = ['password1', 'password2']
-    
-    def __init__(self, *args, **kwargs) -> None:
-        super(UpdateUserForm, self).__init__(*args, **kwargs)
 
-        self.fields['email'].required = True
+class ChangePasswordForm(forms.Form):
+    currentPassword = forms.CharField(label='Current Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Current Password',
+                'aria-describedBy': 'currentPasswordHelpBlock'}),
+        help_text='Enter your current password to confirm your identity.')
+    newPassword = forms.CharField(label='New Password', widget=forms.PasswordInput(
+        attrs={'class': 'form-control', 'placeholder': 'New Password',
+                'aria-describedBy': 'newPasswordHelpBlock'}),
+        help_text='Enter your new password.')
+    confirmPassword = forms.CharField(label='Confirm Password', widget=forms.PasswordInput(
+        attrs={'class': 'form-control', 'placeholder': 'Confirm Password',
+                'aria-describedBy': 'confirmPasswordHelpBlock'}),
+        help_text='Enter your new password again to confirm it.')
 
-    # email validation
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if UserModel.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError('Email already exists')
-        if len(email) > 350:
-            raise forms.ValidationError('Email is too long')
-        return email
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
 
-    
-        
+        if new_password != confirm_password:
+            raise forms.ValidationError("New password and confirm password must match.")
+
+
+class AddUpdateAddressForm(forms.ModelForm):
+    class Meta:
+        model = BillingAddress
+        exclude = ['user']
+
+        widgets = {
+            'full_name': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Full name',
+                'aria-describedBy': 'full_nameHelpBlock'
+            }),
+            'email': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email address',
+                'aria-describedBy': 'emailHelpBlock'
+            }),
+            'address1': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Address line 1',
+                'aria-describedBy': 'address1HelpBlock'
+            }),
+            'address2': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Address line 2',
+                'aria-describedBy': 'address2HelpBlock'
+            }),
+            'city': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'City',
+                'aria-describedBy': 'cityHelpBlock'
+            }),
+            'state': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'State',
+                'aria-describedBy': 'stateHelpBlock'
+            }),
+            'zipcode': TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Zipcode',
+                'aria-describedBy': 'zipcodeHelpBlock'
+            }),
+        }
+        labels = {
+            'full_name': 'Full Name',
+            'email': 'Email Address',
+            'address1': 'Address Line 1',
+            'address2': 'Address Line 2',
+            'city': 'City',
+            'state': 'State',
+            'zipcode': 'Zipcode'
+        }
+        help_texts = {
+            'full_nameHelpBlock': 'Enter your full name.',
+            'emailHelpBlock': 'Enter your email address.',
+            'address1HelpBlock': 'Enter your address.',
+            'address2HelpBlock': 'Enter your address.',
+            'cityHelpBlock': 'Enter your city.',
+            'stateHelpBlock': 'Enter your state.',
+            'zipcodeHelpBlock': 'Enter your zipcode.'
+        }

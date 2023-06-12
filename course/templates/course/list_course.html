@@ -68,9 +68,9 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ course.name }}</h5>
                             <p class="card-text">{{ course.description }}</p>
-                            {% if user.is_authenticated and user.user_type == 'S' %}
-                                <a href="{% url 'course:enroll' pk=course.id %}" class="btn btn-primary mt-2">Enroll Now</a>
-                            {% endif %}
+                            <button type="button" id="add-button" value="{{ course.id }}" class="btn btn-secondary btn-sm">
+                                Add to cart
+                            </button>
                         </div>
                         </a>
                     </div>
@@ -82,10 +82,39 @@
         </div>
     </div>
     </div>
+
+
+    <script>
+
+        $(document).on('click', '#add-button', function(e) {
+    
+            e.preventDefault();
+    
+            var course_id = $(this).val();
+            $.ajax({
+                url: "{% url 'cart:add' %}",
+                type: "POST",
+                data: {
+                    course_id: course_id,
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    action: 'post'
+                },
+                success: function(response) {
+                    console.log(response);
+                    location.reload(True)
+                },
+                error: function(xhr, errmsg, err) {
+                    console.log(err);
+                }
+            });
+        });
+    
+    </script>
+        
 </div>
 
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+{% comment %} <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script> {% endcomment %}
 
 {% endblock content %}

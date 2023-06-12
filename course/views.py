@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.conf import settings
+
 from .forms import CourseForm
 from .models import Course
 from user.models import UserModel
+from cart.cart import Cart
 
 
 @login_required(login_url='user:login')
@@ -23,9 +28,13 @@ def list_course(request):
     if request.user.is_authenticated:
         courses = Course.objects.filter(id__in = request.user.courses.all())
         allcourses = Course.objects.all().exclude(id__in = courses)
+        coursesInCart = [item['course'].id for item in Cart(request)]
+        allcourses = allcourses.exclude(id__in = coursesInCart)
         return render(request, 'course/list_course.html', {'courses': courses, 'allcourses': allcourses})
     else:
         allcourses = Course.objects.all()
+        coursesInCart = [item['course'].id for item in Cart(request)]
+        allcourses = allcourses.exclude(id__in = coursesInCart)
         return render(request, 'course/list_course.html', {'allcourses': allcourses})
 
 
@@ -52,3 +61,4 @@ def dropout(request, pk):
         user.courses.remove(course)
         return redirect('course:list')
     return redirect('course:list')
+

@@ -10,7 +10,7 @@ class UserModel(AbstractUser):
         ('GA', 'Graduate Assistant')
     ]
     user_type = models.CharField(max_length=2, choices=TYPES, default='S')
-    courses = models.ManyToManyField(Course, null=True, blank=True)
+    courses = models.ManyToManyField(Course, blank=True)
 
     class Meta:
         verbose_name = 'User'
