@@ -3,6 +3,7 @@ import uuid
 import os
 import mimetypes
 from django.utils.deconstruct import deconstructible
+from django.contrib.auth import get_user_model
 
 
 class Course(models.Model):
@@ -69,6 +70,7 @@ class Content(models.Model):
     audio_type = models.CharField(max_length=100, blank=True)
     video_content = models.FileField(upload_to=path_and_rename, blank=True)
     video_type = models.CharField(max_length=100, blank=True)
+    viewed_by = models.ManyToManyField('user.UserModel', related_name='viewed_contents', blank=True)
 
     def save(self, *args, **kwargs):
         if self.audio_content:
@@ -82,3 +84,16 @@ class Content(models.Model):
 
     def __str__(self):
         return 'Content for lesson {}'.format(self.lesson.title)
+
+
+class Progress(models.Model):
+    student = models.ForeignKey('user.UserModel', on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    is_complete = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ['student', 'lesson']
+        verbose_name_plural = 'Progress'
+
+    def __str__(self):
+        return f'{self.student} progress in {self.lesson}'
