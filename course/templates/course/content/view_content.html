@@ -1,0 +1,23 @@
+{% if content.content_type == "TEXT" %}
+    <p>{{ content.text_content }}</p>
+{% elif content.content_type == "IMAGE" %}
+    <img src="{{ content.image_content.url }}" alt="{{ lesson.title }}">
+    <a href="{{ content.image_content.url }}" download>Download Image</a>
+{% elif content.content_type == "PDF" %}
+    <embed src="{{ content.pdf_content.url }}" type="application/pdf" width="100%" height="600px">
+    <a href="{{ content.pdf_content.url }}" download>Download PDF</a>
+{% elif content.content_type == "WEBPAGE" %}
+    <iframe src="{{ content.webpage_content }}" width="100%" height="600"></iframe>
+{% elif content.content_type == "AUDIO" %}
+    <audio controls>
+        <source src="{{ content.audio_content.url }}" type="{{ content.audio_type }}">
+        Your browser does not support the audio element.
+    </audio>
+    <a href="{{ content.audio_content.url }}" download>Download Audio</a>
+{% elif content.content_type == "VIDEO" %}
+    <video width="320" height="240" controls>
+        <source src="{{ content.video_content.url }}" type="{{ content.video_type }}">
+        Your browser does not support the video tag.
+    </video>
+    <a href="{{ content.video_content.url }}" download>Download Video</a>
+{% endif %}

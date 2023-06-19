@@ -150,3 +150,7 @@ def user_profile(request):
     }
 
     return render(request, 'user/profile.html', context)
+
+
+def forbidden_error(request):
+    return render(request, 'user/forbidden.html')

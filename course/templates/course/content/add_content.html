@@ -1,0 +1,73 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+
+    body {
+        background-color: gray;
+    }
+
+</style>
+<div class="container-fluid col-6 bg-white shadow-md p-5 form-layout">
+    <h3>Add Content</h3>
+    <hr><br>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div id="div_id_title" class="form-group">
+            {{ form.title.label_tag }}
+            {{ form.title }}
+        </div>
+        <div id="div_id_content_type" class="form-group">
+            {{ form.content_type.label_tag }}
+            {{ form.content_type }}
+        </div>
+        <div id="div_id_text_content" class="form-group">
+            {{ form.text_content.label_tag }}
+            {{ form.text_content }}
+        </div>
+        <div id="div_id_image_content" class="form-group" style="display:none">
+            {{ form.image_content.label_tag }}
+            {{ form.image_content }}
+        </div>
+        <div id="div_id_pdf_content" class="form-group" style="display:none">
+            {{ form.pdf_content.label_tag }}
+            {{ form.pdf_content }}
+        </div>
+        <div id="div_id_webpage_content" class="form-group" style="display:none">
+            {{ form.webpage_content.label_tag }}
+            {{ form.webpage_content }}
+        </div>
+        <div id="div_id_audio_content" class="form-group" style="display:none">
+            {{ form.audio_content.label_tag }}
+            {{ form.audio_content }}
+        </div>
+        <div id="div_id_video_content" class="form-group" style="display:none">
+            {{ form.video_content.label_tag }}
+            {{ form.video_content }}
+        </div>
+        <button class="btn btn-primary btn-lg w-100" type="submit">Add Content</button>
+    </form>
+
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#id_content_type').change(function() {
+            // Hide all input divs initially
+            $('#div_id_text_content').hide();
+            $('#div_id_image_content').hide();
+            $('#div_id_pdf_content').hide();
+            $('#div_id_webpage_content').hide();
+            $('#div_id_audio_content').hide();
+            $('#div_id_video_content').hide();
+
+            // Show the selected input div
+            $('#div_id_' + $(this).val().toLowerCase() + '_content').show();
+        });
+    });
+</script>
+
+{% endblock content %}

@@ -22,4 +22,6 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='user/password/password-reset-form.html'), name='password_reset_confirm'),
     path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(template_name='user/password/password-reset-complete.html'), name='password_reset_complete'),
     
+    path('error_forbidden', views.forbidden_error, name='forbidden')
+    
 ]
