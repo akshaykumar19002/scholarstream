@@ -1,0 +1,56 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-4">
+            <h3> {{quiz.name}} </h3>
+        </div>
+        {% if user.is_authenticated and user.user_type == 'I' %}
+        <div class="offset-6 col-1">
+            {% if quiz.is_published %}
+                <a href="{% url 'course:hide_quiz' course_id=course.id quiz_id=quiz.id %}" class="btn btn-primary">Hide Quiz</a>
+            {% else %}
+                <a href="{% url 'course:publish_quiz' course_id=course.id quiz_id=quiz.id %}" class="btn btn-primary float-end">Publish Quiz</a>
+            {% endif %}
+        </div>
+        <div class="col-1">
+            <a href="{% url 'course:delete_quiz' course_id=course.id quiz_id=quiz.id %}" class="btn btn-primary float-end">Delete Quiz</a>
+        </div>
+        {% endif %}
+    </div>
+    <p>{{ quiz.description }}</p>
+
+    {% for question in questions %}
+        <h2 class="px-3">Question {{ forloop.counter }}: {{ question.question_text }}</h2>
+        <div class="px-5">
+            {% if question.question_type == 'MCQ' or question.question_type == 'MCMS' %}
+            
+                {% for choice in question.choices.all %}
+                    <p>
+                        {% if question.question_type == 'MCMS' %}
+                            <input type="checkbox" name="question_{{ question.id }}" value="{{ choice.id }}">
+                        {% else %}
+                            <input type="radio" name="question_{{ question.id }}" value="{{ choice.id }}">
+                        {% endif %}
+                        {{ choice.choice_text }}
+                    </p>
+                {% endfor %}
+            {% elif question.question_type == 'FITB' %}
+                <input type="text" name="question_{{ question.id }}">
+            {% else %}
+                <p>
+                    <input type="radio" name="question_{{ question.id }}" value="True"> True
+                    <input type="radio" name="question_{{ question.id }}" value="False"> False
+                </p>
+            {% endif %}
+            <br>
+        </div>
+    {% endfor %}
+
+</div>
+{% endblock content %}

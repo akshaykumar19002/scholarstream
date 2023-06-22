@@ -1,9 +1,8 @@
 from .models import Course
-from django.forms import ModelForm, TextInput, NumberInput, FileInput
+from django.forms import ModelForm, TextInput, NumberInput, FileInput, Textarea, DateTimeInput
 from django import forms
-from .models import Content, Lesson
+from .models import *
 from django.core.exceptions import ValidationError
-
 
 class CourseForm(ModelForm):
     class Meta:
@@ -108,3 +107,84 @@ class ContentForm(forms.ModelForm):
             'audio_content': forms.FileInput(attrs={'class': 'form-control'}),
             'video_content': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+
+class AssignmentForm(forms.ModelForm):
+    class Meta:
+        model = Assignment
+        fields = ['title', 'description', 'due_date']
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Enter assignment title'}),
+            'description': Textarea(attrs={'placeholder': 'Enter assignment description'}),
+            'due_date': DateTimeInput(attrs={'type': 'datetime-local'})
+        }
+        labels = {
+            'title': 'Assignment Title',
+            'description': 'Assignment Description',
+            'due_date': 'Due Date'
+        }
+        help_texts = {
+            'title': 'Enter a title for your assignment.',
+            'description': 'Enter a description for your assignment.',
+            'due_date': 'Enter a due date for your assignment.'
+        }
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+    
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            result = [single_file_clean(d, initial) for d in data]
+        else:
+            result = single_file_clean(data, initial)
+        return result
+
+
+class AssignmentFileForm(forms.Form):
+    file_field = MultipleFileField()
+
+
+class AssignmentSubmissionForm(forms.ModelForm):
+    class Meta:
+        model = AssignmentSubmission
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter text content'})
+        }
+        labels = {
+            'content': 'Content',
+        }
+        help_texts = {
+            'content': 'Enter text content for your assignment.',
+        }
+    
+    
+class SubmissionFileForm(forms.Form):
+    file_field = MultipleFileField(required=False)
+
+
+class QuizForm(forms.ModelForm):
+    class Meta:
+        model = Quiz
+        exclude = ('course', 'creator',)
+
+class QuestionForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        exclude = ('quiz',)
+
+class ChoiceForm(forms.ModelForm):
+    class Meta:
+        model = Choice
+        exclude = ('question',)
+
+class QuizAttemptForm(forms.ModelForm):
+    class Meta:
+        model = QuizAttempt
+        fields = ['quiz', 'user', 'question', 'choice', 'answer_text']

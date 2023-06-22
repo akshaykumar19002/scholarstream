@@ -1,0 +1,25 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+
+    body {
+        background-color: gray;
+    }
+
+</style>
+<div class="container-fluid col-6 bg-white shadow-md p-5 form-layout">
+    <h3>Create Assignment</h3>
+    <hr><br>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form|crispy }}
+        {{ file_form|crispy }}
+        <button class="btn btn-primary btn-lg w-100" type="submit">Save</button>
+    </form>
+
+</div>
+{% endblock content %}

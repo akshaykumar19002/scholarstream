@@ -3,7 +3,7 @@ import uuid
 import os
 import mimetypes
 from django.utils.deconstruct import deconstructible
-from django.contrib.auth import get_user_model
+from django.conf import settings
 
 
 class Course(models.Model):
@@ -35,7 +35,6 @@ class PathAndRename(object):
             filename = '{}.{}'.format(uuid.uuid4().hex, ext)
         return os.path.join(self.path, filename)
 
-path_and_rename = PathAndRename("contents/")
 
 class Content(models.Model):
     TEXT = 'TEXT'
@@ -53,6 +52,8 @@ class Content(models.Model):
         (AUDIO, 'Audio'),
         (VIDEO, 'Video'),
     ]
+    
+    content_path = PathAndRename("contents/")
 
     title = models.CharField(max_length=200)
     lesson = models.ForeignKey(Lesson, related_name='contents', on_delete=models.CASCADE)
@@ -63,12 +64,12 @@ class Content(models.Model):
     )
     order = models.PositiveIntegerField(default=0)
     text_content = models.TextField(blank=True)
-    image_content = models.ImageField(upload_to=path_and_rename, blank=True)
-    pdf_content = models.FileField(upload_to=path_and_rename, blank=True)
+    image_content = models.ImageField(upload_to=content_path, blank=True)
+    pdf_content = models.FileField(upload_to=content_path, blank=True)
     webpage_content = models.URLField(blank=True)
-    audio_content = models.FileField(upload_to=path_and_rename, blank=True)
+    audio_content = models.FileField(upload_to=content_path, blank=True)
     audio_type = models.CharField(max_length=100, blank=True)
-    video_content = models.FileField(upload_to=path_and_rename, blank=True)
+    video_content = models.FileField(upload_to=content_path, blank=True)
     video_type = models.CharField(max_length=100, blank=True)
     viewed_by = models.ManyToManyField('user.UserModel', related_name='viewed_contents', blank=True)
 
@@ -97,3 +98,85 @@ class Progress(models.Model):
 
     def __str__(self):
         return f'{self.student} progress in {self.lesson}'
+
+
+class Assignment(models.Model):
+
+    course = models.ForeignKey(Course, related_name='assignments', on_delete=models.CASCADE)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_assignments', on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    due_date = models.DateTimeField()
+    creation_date = models.DateTimeField(auto_now_add=True)
+
+
+class AssignmentFile(models.Model):
+    assignent_path = PathAndRename("assignments/")
+    
+    file = models.FileField(upload_to=assignent_path, null=True, blank=True)
+    assignment = models.ForeignKey(Assignment, related_name='files', on_delete=models.CASCADE)
+    
+
+class AssignmentSubmission(models.Model):
+    assignment = models.ForeignKey(Assignment, related_name='submissions', on_delete=models.CASCADE)
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='submissions', on_delete=models.CASCADE)
+    content = models.TextField(blank=True, null=True)
+    submission_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-submission_date']
+
+
+class SubmissionFile(models.Model):
+    submission_path = PathAndRename("submission/")
+    
+    file = models.FileField(upload_to=submission_path, null=True, blank=True)
+    submission = models.ForeignKey(AssignmentSubmission, related_name='files', on_delete=models.CASCADE)
+
+
+class Quiz(models.Model):
+    course = models.ForeignKey(Course, related_name='quizzes', on_delete=models.CASCADE)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_quizzes', on_delete=models.CASCADE)
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    attempts_allowed = models.IntegerField(default=1)
+    due_date = models.DateTimeField()
+    creation_date = models.DateTimeField(auto_now_add=True)
+    is_published = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+class Question(models.Model):
+    QUIZ_TYPES = (
+        ('MCQ', 'Multiple Choice Question'),
+        ('MCMS', 'Multi-Choice Multiple Selection Question'),
+        ('FITB', 'Fill in the Blanks'),
+        ('TF', 'True/False'),
+    )
+    quiz = models.ForeignKey(Quiz, related_name='questions', on_delete=models.CASCADE)
+    question_text = models.TextField()
+    question_type = models.CharField(max_length=4, choices=QUIZ_TYPES)
+
+    def __str__(self):
+        return self.question_text
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
+    choice_text = models.TextField()
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.choice_text
+
+
+class QuizAttempt(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, related_name='attempts', on_delete=models.CASCADE)
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
+    answer_text = models.TextField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('quiz', 'user')

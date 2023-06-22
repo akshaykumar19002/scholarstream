@@ -3,17 +3,20 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
-from django.core.mail import send_mail
-from django.conf import settings
 from django.shortcuts import render, redirect
 
-from .forms import CourseForm, ContentForm, LessonForm
-from .models import Course, Lesson, Content, Progress
+from .forms import *
+from .models import *
 from user.models import UserModel
 from cart.cart import Cart
 
 from django.views import View
 from django.db import models
+
+from datetime import datetime
+from django.utils import timezone
+
+import json
 
 
 @login_required(login_url='user:login')
@@ -173,3 +176,209 @@ def update_progress(student, lesson):
     if all(contents_viewed):
         progress.is_complete = True
         progress.save()
+
+
+@login_required(login_url='user:login')
+def create_assignment(request, course_id):
+    user = get_object_or_404(get_user_model(), id=request.user.pk)
+    if user.user_type != 'I':
+        return redirect('user:forbidden')
+    
+    course = get_object_or_404(Course, id=course_id)
+
+    if request.method == 'POST':
+        form = AssignmentForm(request.POST)
+        file_form = AssignmentFileForm(request.POST, request.FILES)
+
+        if form.is_valid() and file_form.is_valid():
+            assignment = form.save(commit=False)
+            assignment.course = course
+            assignment.creator = request.user
+            assignment.save()
+
+            # request.FILES.getlist('file_field') gives a list of all uploaded files
+            for f in request.FILES.getlist('file_field'):
+                AssignmentFile.objects.create(file=f, assignment=assignment)
+
+            return redirect('course:list_assignments', course_id=course.id)
+
+    else:
+        form = AssignmentForm()
+        file_form = AssignmentFileForm()
+
+    return render(request, 'course/assignment/add_assignment.html', {'form': form, 'file_form': file_form, 'course': course})
+
+
+@login_required(login_url='user:login')
+def list_assignments(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    assignments = Assignment.objects.filter(course=course)
+
+    context = {
+        'course': course,
+        'assignments': assignments
+    }
+    return render(request, 'course/assignment/list_assignments.html', context)
+
+
+@login_required(login_url='user:login')
+def view_assignment(request, course_id, assignment_id):
+    user = get_object_or_404(get_user_model(), id=request.user.pk)
+    
+    course = get_object_or_404(Course, id=course_id)
+    assignment = get_object_or_404(Assignment, id=assignment_id)
+
+    if request.user.user_type == 'S':
+        submissions = AssignmentSubmission.objects.filter(assignment=assignment, student=user)
+    else:
+        submissions = AssignmentSubmission.objects.filter(assignment=assignment)
+        
+    if request.method == 'POST':
+        form = AssignmentSubmissionForm(request.POST)
+        file_form = SubmissionFileForm(request.POST, request.FILES)
+
+        if form.is_valid() and file_form.is_valid():
+            submission = form.save(commit=False)
+            submission.assignment = assignment
+            submission.student = user
+            submission.save()
+
+            for f in request.FILES.getlist('file_field'):
+                SubmissionFile.objects.create(file=f, submission= submission)
+
+            return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
+        else:
+            context = {
+                'form': form,
+                'file_form': file_form,
+                'course': course,
+                'assignment': assignment,
+                'submissions': submissions,
+                'current_time': timezone.now()
+            }
+            return render(request, 'course/assignment/view_assignment.html', context)
+    else:
+        form = AssignmentSubmissionForm()
+        file_form = SubmissionFileForm()
+
+    context = {
+        'form': form,
+        'file_form': file_form,
+        'course': course,
+        'assignment': assignment,
+        'submissions': submissions,
+        'current_time': timezone.now()
+    }
+    return render(request, 'course/assignment/view_assignment.html', context)
+
+
+@login_required(login_url='user:login')
+def list_quizzes(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    if (request.user.user_type != 'I'):
+        quizzes = Quiz.objects.filter(course=course, is_published=True)
+    else:
+        quizzes = Quiz.objects.filter(course=course)
+    return render(request, 'course/quiz/list_quizzes.html', {'course': course, 'quizzes': quizzes})
+
+
+@login_required(login_url='user:login')
+def add_quiz(request, course_id):
+    if (request.user.user_type != 'I'):
+        return redirect('user:forbidden')
+    course = get_object_or_404(Course, id=course_id)
+    user = get_object_or_404(get_user_model(), id=request.user.pk)
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        quiz = Quiz.objects.update_or_create(
+            course_id=course_id,
+            creator=user,
+            name=data.get('quizName'),
+            description=data.get('quizDescription'),
+            attempts_allowed=int(data.get('attemptsAllowed')),
+            due_date=datetime.strptime(data.get('dueDate'), '%Y-%m-%dT%H:%M')
+        )
+        questions = data.get('questions', [])
+        quiz = quiz[0]
+        for question_data in questions:
+            question = Question.objects.update_or_create(
+                quiz=quiz,
+                question_text=question_data.get('text'),
+                question_type=question_data.get('type'),
+            )
+            question = question[0]
+            choices = question_data.get('choices', [])
+            for choice_data in choices:
+                Choice.objects.update_or_create(
+                    question=question,
+                    choice_text=choice_data.get('text'),
+                    is_correct=choice_data.get('isCorrect'),
+                )
+        return JsonResponse({'success': True})
+    else:
+        return render(request, 'course/quiz/add_quiz.html', {'course': course})
+
+
+@login_required(login_url='user:login')
+def view_quiz(request, course_id, quiz_id):
+    if (request.user.user_type != 'I'):
+        return redirect('user:forbidden')
+    course = get_object_or_404(Course, id=course_id)
+    quiz = get_object_or_404(Quiz, course__id=course_id, id=quiz_id)
+    questions = Question.objects.filter(quiz=quiz)
+    return render(request, 'course/quiz/view_quiz.html', {'quiz': quiz, 'questions': questions, 'course': course})
+
+
+@login_required(login_url='user:login')
+def delete_quiz(request, course_id, quiz_id):
+    if (request.user.user_type != 'I'):
+        return redirect('user:forbidden')
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    quiz.delete()
+    return redirect('course:list_quizzes', course_id=course_id)
+
+@login_required(login_url='user:login')
+def publish_quiz(request, course_id, quiz_id):
+    if (request.user.user_type != 'I'):
+        return redirect('user:forbidden')
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    quiz.is_published = True
+    quiz.save()
+    return redirect('course:list_quizzes', course_id=course_id)
+
+@login_required(login_url='user:login')
+def hide_quiz(request, course_id, quiz_id):
+    if (request.user.user_type != 'I'):
+        return redirect('user:forbidden')
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    quiz.is_published = False
+    quiz.save()
+    return redirect('course:list_quizzes', course_id=course_id)
+
+
+@login_required(login_url='user:login')
+def attempt_quiz(request, course_id, quiz_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = get_object_or_404(get_user_model(), id=request.user.pk)
+    quiz = get_object_or_404(Quiz, course__id=course_id, id=quiz_id)
+    questions = quiz.questions.all()
+    
+    if user.user_type != 'S':
+        return redirect('user:forbidden')
+
+    if request.method == 'POST':
+        form = QuizAttemptForm(request.POST)
+        if form.is_valid():
+            question_id = form.cleaned_data.get('question').id
+            attempts = QuizAttempt.objects.filter(user=user, quiz=quiz, question__id=question_id).count()
+
+            if attempts <= quiz.attempts_allowed:
+                form.save()  
+                return redirect('course:list_quizzes', course_id=course_id)
+            return redirect('course:list_quizzes', course_id=course_id)
+        else:
+            print(form.errors)
+            return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course})
+    else:
+        form = QuizAttemptForm(initial={'quiz': quiz, 'user': user})
+        return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course})

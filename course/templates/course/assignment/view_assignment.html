@@ -1,0 +1,64 @@
+{% extends "course/dashboard/base_dashboard.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+{% load tz %}
+
+{% block content %}
+<div class="container-fluid px-5">
+  
+    <h1>{{ assignment.title }}</h1>
+    <p>{{ assignment.description }}</p>
+    <hr>
+
+    <h2>Submissions</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                {% if user.user_type == 'I' %}
+                    <th style="width: 25%;" scope="col">Student</th>
+                {% endif %}
+                <th style="width: 25%;" scope="col">Submission Date</th>
+                <th>Content</th>
+                <th style="width: 25%;" scope="col">Files</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for submission in submissions %}
+            <tr>
+                {% if user.user_type == 'I' %}
+                    <td>{{ submission.student.get_full_name }}</td>
+                {% endif %}
+                {% localtime on %}
+                    <td>{{ submission.submission_date|date:"F j, Y, P" }}</td>
+                {% endlocaltime %}
+                <td>{{ submission.content }}</td>
+                <td>
+                    {% for file in submission.files.all %}
+                        <a href="{{ file.file.url }}">Submission Link</a><br>
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if request.user.user_type == 'S' %}
+        <br><hr><br>
+        {% if assignment.due_date > current_time %}
+            <h2>Submit Assignment</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                {{ file_form|crispy }}
+                <button class="btn btn-primary" type="submit">Submit Assignment</button>
+            </form>
+
+        {% else %}
+            <h2>Assignment is closed</h2>
+            <p>No submissions are allowed</p>
+        {% endif %}
+    {% endif %}
+    <br>
+</div>
+{% endblock %}
