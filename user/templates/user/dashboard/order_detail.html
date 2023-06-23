@@ -1,0 +1,33 @@
+{% extends "user/dashboard/base_dashboard.html" %}
+
+{% block content %}
+
+<div class="container-fluid px-4">
+
+<h2>Order Details</h2>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Order #{{ order.id }}</h3>
+    </div>
+    <div class="card-body">
+        <p><strong>Full Name:</strong> {{ order.full_name }}</p>
+        <p><strong>Email:</strong> {{ order.email }}</p>
+        <p><strong>Shipping Address:</strong> {{ order.shipping_address }}</p>
+        <p><strong>Amount Paid:</strong> ${{ order.amount_paid }}</p>
+        <p><strong>Date Ordered:</strong> {{ order.date_ordered|date:"F d, Y" }}</p>
+
+        <h4>Order Items:</h4>
+        {% for item in order.orderitem_set.all %}
+        <p><strong>Course:</strong> <a href="{% url 'course:detail' pk=item.course.id%}">{{ item.course.name }}</a></p>
+        <p><strong>Price:</strong> ${{ item.price }}</p>
+        {% empty %}
+        <p>No items in this order.</p>
+        {% endfor %}
+    </div>
+</div>
+
+
+</div>
+
+{% endblock %}

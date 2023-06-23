@@ -1,7 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.sites.shortcuts import get_current_site
 from .models import UserModel as User
 from django.views import View
+from payment.models import *
+from course.models import LessonProgress, AssignmentProgress, QuizProgress, Course
 
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
@@ -154,3 +156,59 @@ def user_profile(request):
 
 def forbidden_error(request):
     return render(request, 'user/forbidden.html')
+
+@login_required(login_url='user:login')
+def user_orders(request):
+    user = User.objects.get(id=request.user.id)
+    orders = Order.objects.filter(user=user).order_by('-date_ordered')
+    return render(request, 'user/dashboard/orders.html', {'orders': orders})
+
+@login_required(login_url='user:login')
+def order_detail(request, order_id):
+    order = Order.objects.get(id=order_id, user=request.user)
+    return render(request, 'user/dashboard/order_detail.html', {'order': order})
+
+
+@login_required(login_url='user:login')
+def view_user_progress(request):
+    user = get_object_or_404(get_user_model(), id=request.user.pk)
+    user_courses = user.courses.all()
+    progress_data = []
+    
+    for course in user_courses:
+        lessons = course.lessons.all()
+        for lesson in lessons:
+            progress = LessonProgress.objects.filter(lesson=lesson, student=user)
+            if len(progress) == 0:
+                lesson.progress = None
+            else:
+                lesson.progress = progress[0]
+        
+        assignments = course.assignments.all()
+        for assignment in assignments:
+            progress = AssignmentProgress.objects.filter(assignment=assignment, student=user)
+            if len(progress) == 0:
+                assignment.progress = None
+            else:
+                assignment.progress = progress[0]
+        
+        quizzes = course.quizzes.all()
+        for quiz in quizzes:
+            progress = QuizProgress.objects.filter(quiz=quiz, student=user)
+            if len(progress) == 0:
+                quiz.progress = None
+            else:
+                quiz.progress = progress[0]
+        
+        course_progress = {
+            'course': course,
+            'lessons': lessons,
+            'assignments': assignments,
+            'quizzes': quizzes,
+        }
+        progress_data.append(course_progress)
+
+    context = {
+        'progress_data': progress_data,
+    }
+    return render(request, 'user/dashboard/user_progress.html', context)

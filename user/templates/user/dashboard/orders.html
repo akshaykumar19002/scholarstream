@@ -1,0 +1,41 @@
+{% extends "user/dashboard/base_dashboard.html" %}
+
+{% block content %}
+
+<div class="container-fluid px-4">
+ 
+    <h2>Your Orders</h2>
+    
+    <div class="row">
+        {% for order in orders %}
+        <div class="col-md-6">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <a href="{% url 'user:order_detail' order_id=order.id %}"><h3 class="card-title">Order #{{ order.id }}</h3></a>
+                </div>
+                <div class="card-body">
+                    <p><strong>Amount Paid:</strong> ${{ order.amount_paid }}</p>
+                    <p><strong>Date Ordered:</strong> {{ order.date_ordered|date:"F d, Y" }}</p>
+    
+                    {% if order.orderitem_set.all|length > 0 %}
+                        <h4>Order Items:</h4>
+                        {% for item in order.orderitem_set.all %}
+                            <p><strong>Course:</strong> {{ item.course.name }}</p>
+                            <p><strong>Price:</strong> ${{ item.price }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p>No items in this order.</p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="col-12">You have no orders yet.</p>
+        {% endfor %}
+    </div>
+    <br><br>
+
+</div>
+
+{% endblock %}

@@ -87,14 +87,14 @@ class Content(models.Model):
         return 'Content for lesson {}'.format(self.lesson.title)
 
 
-class Progress(models.Model):
+class LessonProgress(models.Model):
     student = models.ForeignKey('user.UserModel', on_delete=models.CASCADE)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     is_complete = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ['student', 'lesson']
-        verbose_name_plural = 'Progress'
+        verbose_name_plural = 'LessonProgress'
 
     def __str__(self):
         return f'{self.student} progress in {self.lesson}'
@@ -122,6 +122,12 @@ class AssignmentSubmission(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='submissions', on_delete=models.CASCADE)
     content = models.TextField(blank=True, null=True)
     submission_date = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = (
+        ('SUBMITTED', 'Submitted'),
+        ('EVALUATED', 'Evaluated'),
+    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='SUBMITTED')
+    grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     class Meta:
         ordering = ['-submission_date']
@@ -177,6 +183,27 @@ class QuizAttempt(models.Model):
     choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
     answer_text = models.TextField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    is_complete = models.BooleanField(default=False)
+    score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     class Meta:
         unique_together = ('quiz', 'user')
+
+class QuizProgress(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    is_complete = models.BooleanField(default=False)
+    total_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('quiz', 'student')
+
+
+class AssignmentProgress(models.Model):
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    is_complete = models.BooleanField(default=False)
+    grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('assignment', 'student')

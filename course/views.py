@@ -162,7 +162,7 @@ def view_content(request, content_id):
 
 
 def update_progress(student, lesson):
-    progress, created = Progress.objects.get_or_create(
+    progress, created = LessonProgress.objects.get_or_create(
         student=student,
         lesson=lesson,
         defaults={'is_complete': False}
@@ -245,6 +245,8 @@ def view_assignment(request, course_id, assignment_id):
 
             for f in request.FILES.getlist('file_field'):
                 SubmissionFile.objects.create(file=f, submission= submission)
+                
+            AssignmentProgress.objects.update_or_create(assignment=assignment, user=user, defaults={'is_complete': False})
 
             return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
         else:
@@ -374,6 +376,9 @@ def attempt_quiz(request, course_id, quiz_id):
 
             if attempts <= quiz.attempts_allowed:
                 form.save()  
+                
+                QuizProgress.objects.update_or_create(quiz=quiz, user=user, defaults={'is_complete': False})
+
                 return redirect('course:list_quizzes', course_id=course_id)
             return redirect('course:list_quizzes', course_id=course_id)
         else:
@@ -382,3 +387,42 @@ def attempt_quiz(request, course_id, quiz_id):
     else:
         form = QuizAttemptForm(initial={'quiz': quiz, 'user': user})
         return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course})
+
+
+@login_required(login_url='user:login')
+def view_course_progress(request, course_id):
+    user = get_object_or_404(get_user_model(), id=request.user.pk)
+    course = get_object_or_404(Course, id=course_id)
+    
+    lessons = course.lessons.all()
+    for lesson in lessons:
+        progress = LessonProgress.objects.filter(lesson=lesson, student=user)
+        if len(progress) == 0:
+            lesson.progress = None
+        else:
+            lesson.progress = progress[0]
+    
+    assignments = course.assignments.all()
+    for assignment in assignments:
+        progress = AssignmentProgress.objects.filter(assignment=assignment, student=user)
+        if len(progress) == 0:
+            assignment.progress = None
+        else:
+            assignment.progress = progress[0]
+    
+    quizzes = course.quizzes.all()
+    for quiz in quizzes:
+        progress = QuizProgress.objects.filter(quiz=quiz, student=user)
+        if len(progress) == 0:
+            quiz.progress = None
+        else:
+            quiz.progress = progress[0]
+    
+    course_progress = {
+        'course': course,
+        'lessons': lessons,
+        'assignments': assignments,
+        'quizzes': quizzes,
+    }
+
+    return render(request, 'course/user_course_progress.html', course_progress)

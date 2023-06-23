@@ -1,0 +1,57 @@
+{% extends 'user/dashboard/base_dashboard.html' %}
+
+{% block content %}
+
+<div class="container-fluid px-3">
+
+    <div class="accordion" id="progressAccordion">
+        {% for progress in progress_data %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ progress.course.id }}">
+                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ progress.course.id }}" {% if forloop.first %}aria-expanded="true"{% else %}aria-expanded="false"{% endif %} aria-controls="collapse{{ progress.course.id }}">
+                    {{ progress.course.name }}
+                </button>
+            </h2>
+            <div id="collapse{{ progress.course.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ progress.course.id }}" data-bs-parent="#progressAccordion">
+                <div class="accordion-body">
+                    <h3>Lessons</h3>
+                    {% for lesson in progress.lessons %}
+                    <p> {{ lesson.title }} - Status: 
+                        {% if lesson.progress != None and lesson.progress.is_complete %}
+                            Complete
+                        {% else %}
+                            Incomplete
+                        {% endif %}
+                    </p>
+                    {% endfor %}
+
+                    <h3>Assignments</h3>
+                    {% for assignment in progress.assignments %}
+                    <p> {{ assignment.title }} - Status: 
+                        {% if assignment.progress != None and assignment.progress.is_complete %}
+                            Complete
+                        {% else %}
+                            Incomplete
+                        {% endif %}
+                    </p>
+                    {% endfor %}
+
+                    <h3>Quizzes</h3>
+                    {% for quiz in progress.quizzes %}
+                    <p> {{ quiz.name }} - Status: 
+                        {% if quiz.progress != None and quiz.progress.is_complete %}
+                            Complete
+                        {% else %}
+                            Incomplete
+                        {% endif %}
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

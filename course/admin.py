@@ -5,7 +5,7 @@ from .models import *
 admin.site.register(Course)
 admin.site.register(Content)
 admin.site.register(Lesson)
-admin.site.register(Progress)
+admin.site.register(LessonProgress)
 admin.site.register(Assignment)
 admin.site.register(AssignmentFile)
 admin.site.register(AssignmentSubmission)

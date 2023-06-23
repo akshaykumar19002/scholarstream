@@ -1,0 +1,36 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% block content %}
+
+<div class="container-fluid px-3">
+<h2> Progress </h2>
+
+    <h3>Lessons</h3>
+    {% for lesson in lessons %}
+        {% if lesson.progress != None and lesson.progress.is_complete %}
+            <p> {{ lesson.title }} - Complete</p>
+        {% else %}
+            <p> {{ lesson.title }} - Incomplete</p>
+        {% endif %}
+    {% endfor %}
+
+    <h3>Assignments</h3>
+    {% for assignment in assignments %}
+    {% if assignment.progress != None and assignment.progress.is_complete %}
+        <p> {{ assignment.title }} - Complete </p>
+    {% else %}
+        <p> {{ assignment.title }} - Incomplete </p>
+    {% endif %}
+    {% endfor %}
+
+    <h3>Quizzes</h3>
+    {% for quiz in quizzes %}
+    {% if quiz.progress != None and quiz.progress.is_complete %}
+        <p> {{ quiz.name }} - Complete </p>
+    {% else %}
+        <p> {{ quiz.name }} - Incomplete </p>
+    {% endif %}
+    {% endfor %}
+</div>
+
+{% endblock %}
