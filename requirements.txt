@@ -22,3 +22,4 @@ six
 sqlparse
 tzdata
 urllib3
+Django-PayPal

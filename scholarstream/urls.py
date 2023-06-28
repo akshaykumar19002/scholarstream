@@ -22,5 +22,6 @@ urlpatterns = [
     path('', include(('course.urls', 'course'), namespace='course')),
     path('user/', include(('user.urls', 'user'))),
     path('cart/', include(('cart.urls', 'cart'), namespace='cart')),
-    path('payment/', include(('payment.urls', 'payment'), namespace='payment'))
+    path('payment/', include(('payment.urls', 'payment'), namespace='payment')),
+    path('paypal/', include('paypal.standard.ipn.urls')),
 ]

@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import BillingAddress
+from .models import *
 
 class BillingForm(forms.ModelForm):
     class Meta:
@@ -28,3 +28,9 @@ class BillingForm(forms.ModelForm):
             'state': 'State',
             'zipcode': 'Zipcode',
         }
+
+
+class SubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = Subscription
+        fields = ['subscription_type']

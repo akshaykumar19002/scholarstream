@@ -30,4 +30,6 @@ urlpatterns = [
     
     path('progress/<int:course_id>/', views.view_course_progress, name='progress'),
     
+    path('search/<str:search_keyword>', views.course_search, name='course_search'),
+    
 ]

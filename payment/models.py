@@ -51,3 +51,27 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return 'Order #{} - {}'.format(self.order.id, self.course.name)
+
+
+SUBSCRIPTION_PRICING = {
+    'W': [9.99, 1, 'W', 'Weekly'],
+    'BW': [14.99, 2, 'W', 'Bi-Weekly'], 
+    'M': [24.99, 1, 'M', 'Monthly'],
+    'Q': [69.99, 3, 'M', 'Quarterly'],
+    'Y': [249.99, 1, 'Y', 'Yearly']
+}
+
+
+class Subscription(models.Model):
+    SUBSCRIPTION_TYPES = [
+        ('W', 'Weekly'),
+        ('BW', 'Bi-Weekly'),
+        ('M', 'Monthly'),
+        ('Q', 'Quarterly'),
+        ('Y', 'Yearly'),
+    ]
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    subscription_type = models.CharField(max_length=2, choices=SUBSCRIPTION_TYPES)
+    start_date = models.DateField(auto_now_add=True)
+    end_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=False)

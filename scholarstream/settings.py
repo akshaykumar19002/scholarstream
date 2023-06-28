@@ -51,7 +51,12 @@ INSTALLED_APPS = [
     'mathfilters',
     'crispy_forms',
     "crispy_bootstrap5",
+    'paypal.standard.ipn'
 ]
+
+PAYPAL_TEST = True
+
+PAYPAL_RECEIVER_EMAIL = env('PAYPAL_RECEIVER_EMAIL')
 
 AUTH_USER_MODEL = 'user.UserModel'
 

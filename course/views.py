@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from django.db.models import Q
 
 from .forms import *
 from .models import *
@@ -426,3 +427,16 @@ def view_course_progress(request, course_id):
     }
 
     return render(request, 'course/user_course_progress.html', course_progress)
+
+
+def course_search(request, search_keyword):
+    if request.user.is_authenticated:
+        courses = Course.objects.filter(name__icontains = search_keyword, id__in = request.user.courses.all())
+        allcourses = Course.objects.all().filter(~Q(id__in = courses), name__icontains = search_keyword)
+        coursesInCart = [item['course'].id for item in Cart(request)]
+        allcourses = allcourses.exclude(id__in = coursesInCart)
+        return render(request, 'course/list_course.html', {'courses': courses, 'allcourses': allcourses})
+    allcourses = Course.objects.filter(name__icontains = search_keyword)
+    coursesInCart = [item['course'].id for item in Cart(request)]
+    allcourses = allcourses.exclude(id__in = coursesInCart)
+    return render(request, 'course/list_course.html', {'allcourses': allcourses})
