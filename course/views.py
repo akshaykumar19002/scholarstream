@@ -53,7 +53,8 @@ def list_course(request):
 @login_required(login_url='user:login')
 def course_dashboard(request, pk):
     course = get_object_or_404(Course, pk=pk)
-    return render(request, 'course/dashboard/dashboard.html', {'course': course})
+    # return render(request, 'course/dashboard/dashboard.html', {'course': course})
+    return redirect('course:list_lessons', course_id=course.id)
 
 
 @login_required(login_url='user:login')
@@ -117,9 +118,37 @@ def list_lessons(request, course_id):
 
     context = {
         'lessons': lessons_and_contents,
-        'course': course
+        'course': course,
+        'all_lessons': Lesson.objects.filter(course=course),
+        'is_view': False
     }
     return render(request, 'course/lesson/list_lessons.html', context)
+
+
+@login_required(login_url='user:login')
+def view_lesson(request, course_id, lesson_id):
+    course = get_object_or_404(Course, pk=course_id)
+    lesson = Lesson.objects.prefetch_related('contents__viewed_by').get(pk=lesson_id)
+    user = get_user_model().objects.get(username=request.user.username)
+
+    lessons_and_contents = []
+    contents = lesson.contents.all()
+    contents_with_viewed_status = [(content, user in content.viewed_by.all()) for content in contents]
+    total_contents = len(contents_with_viewed_status)
+    completed_contents = sum(viewed for content, viewed in contents_with_viewed_status)
+    progress = (completed_contents / total_contents) * 100 if total_contents else 0
+    lessons_and_contents.append((lesson, contents_with_viewed_status, progress))
+
+    print(lessons_and_contents)
+
+    context = {
+        'lessons': lessons_and_contents,
+        'all_lessons': Lesson.objects.filter(course=course),
+        'course': course,
+        'is_view': True
+    }
+    return render(request, 'course/lesson/list_lessons.html', context)
+
 
 
 class AddContent(LoginRequiredMixin, View):
@@ -157,9 +186,10 @@ class AddContent(LoginRequiredMixin, View):
 def view_content(request, content_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     content = get_object_or_404(Content, id=content_id)
+    course = content.lesson.course
     content.viewed_by.add(user)
     update_progress(user, content.lesson)
-    return render(request, 'course/content/view_content.html', {'content': content})
+    return render(request, 'course/content/view_content.html', {'content': content, 'course': course})
 
 
 def update_progress(student, lesson):

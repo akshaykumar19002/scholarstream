@@ -73,10 +73,11 @@ class ContentForm(forms.ModelForm):
     pdf_content = forms.FileField(required=False, validators=[validate_file_extension], widget=forms.FileInput(attrs={'accept': '.pdf'}))
     audio_content = forms.FileField(required=False, validators=[validate_file_extension], widget=forms.FileInput(attrs={'accept': 'audio/*'}))
     video_content = forms.FileField(required=False, validators=[validate_file_extension], widget=forms.FileInput(attrs={'accept': 'video/*'}))
+    other_content = forms.FileField(required=False, widget=forms.FileInput())
 
     class Meta:
         model = Content
-        fields = ['title', 'content_type', 'text_content', 'image_content', 'pdf_content', 'webpage_content', 'audio_content', 'video_content']
+        fields = ['title', 'content_type', 'text_content', 'image_content', 'pdf_content', 'webpage_content', 'audio_content', 'video_content', 'other_content']
         labels = {
             'title': 'Title',
             'content_type': 'Content Type',
@@ -86,6 +87,7 @@ class ContentForm(forms.ModelForm):
             'webpage_content': 'Web URL',
             'audio_content': 'Audio File',
             'video_content': 'Video File',
+            'other_content': 'Other File',
         }
         help_texts = {
             'title': 'Enter the title of the content',
@@ -96,16 +98,18 @@ class ContentForm(forms.ModelForm):
             'webpage_content': 'Enter URL if content type is Webpage',
             'audio_content': 'Upload audio file if content type is Audio',
             'video_content': 'Upload video file if content type is Video',
+            'other_content': 'Upload other file if content type is Other File',
         }
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content_type': forms.Select(attrs={'class': 'form-control'}),
+            'content_type': forms.Select(attrs={'class': 'form-select'}),
             'text_content': forms.Textarea(attrs={'class': 'form-control'}),
             'image_content': forms.FileInput(attrs={'class': 'form-control'}),
             'pdf_content': forms.FileInput(attrs={'class': 'form-control'}),
             'webpage_content': forms.URLInput(attrs={'class': 'form-control'}),
             'audio_content': forms.FileInput(attrs={'class': 'form-control'}),
             'video_content': forms.FileInput(attrs={'class': 'form-control'}),
+            'other_content': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
 

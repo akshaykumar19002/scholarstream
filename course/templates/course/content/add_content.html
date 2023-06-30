@@ -20,10 +20,12 @@
             {{ form.title.label_tag }}
             {{ form.title }}
         </div>
+        <br>
         <div id="div_id_content_type" class="form-group">
             {{ form.content_type.label_tag }}
             {{ form.content_type }}
         </div>
+        <br>
         <div id="div_id_text_content" class="form-group">
             {{ form.text_content.label_tag }}
             {{ form.text_content }}
@@ -48,6 +50,12 @@
             {{ form.video_content.label_tag }}
             {{ form.video_content }}
         </div>
+        
+        <div id="div_id_other_content" class="form-group" style="display:none">
+            {{ form.other_content.label_tag }}
+            {{ form.other_content }}
+        </div>
+        <br>
         <button class="btn btn-primary btn-lg w-100" type="submit">Add Content</button>
     </form>
 
@@ -63,6 +71,9 @@
             $('#div_id_webpage_content').hide();
             $('#div_id_audio_content').hide();
             $('#div_id_video_content').hide();
+            $('#div_id_other_content').hide();
+
+            console.log($(this).val().toLowerCase());
 
             // Show the selected input div
             $('#div_id_' + $(this).val().toLowerCase() + '_content').show();

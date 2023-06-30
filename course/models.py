@@ -43,6 +43,7 @@ class Content(models.Model):
     WEBPAGE = 'WEBPAGE'
     AUDIO = 'AUDIO'
     VIDEO = 'VIDEO'
+    OTHER = 'OTHER'
 
     CONTENT_CHOICES = [
         (TEXT, 'Text'),
@@ -51,6 +52,7 @@ class Content(models.Model):
         (WEBPAGE, 'Webpage'),
         (AUDIO, 'Audio'),
         (VIDEO, 'Video'),
+        (OTHER, 'Other'),
     ]
     
     content_path = PathAndRename("contents/")
@@ -71,6 +73,7 @@ class Content(models.Model):
     audio_type = models.CharField(max_length=100, blank=True)
     video_content = models.FileField(upload_to=content_path, blank=True)
     video_type = models.CharField(max_length=100, blank=True)
+    other_content = models.FileField(upload_to=content_path, blank=True)
     viewed_by = models.ManyToManyField('user.UserModel', related_name='viewed_contents', blank=True)
 
     def save(self, *args, **kwargs):
