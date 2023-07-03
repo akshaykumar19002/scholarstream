@@ -151,7 +151,7 @@ class MultipleFileField(forms.FileField):
 
 
 class AssignmentFileForm(forms.Form):
-    file_field = MultipleFileField()
+    file_field = MultipleFileField(required=False)
 
 
 class AssignmentSubmissionForm(forms.ModelForm):
@@ -188,7 +188,32 @@ class ChoiceForm(forms.ModelForm):
         model = Choice
         exclude = ('question',)
 
+
 class QuizAttemptForm(forms.ModelForm):
     class Meta:
         model = QuizAttempt
-        fields = ['quiz', 'user', 'question', 'choice', 'answer_text']
+        fields = ['quiz', 'user', 'question', 'answer_text']
+
+
+class AssignmentGradeForm(forms.ModelForm):
+    class Meta:
+        model = AssignmentProgress
+        fields = ['grade']
+    
+    
+class QuizGradeForm(forms.ModelForm):
+    class Meta:
+        model = QuizProgress
+        fields = ['total_score']
+        
+        labels = {
+            'total_score': '',
+        }
+
+
+class ExtraGradeForm(forms.ModelForm):
+    grades = forms.FileField(widget=forms.FileInput)
+    class Meta:
+        model = OtherGrade
+        fields = ['name', 'description', 'grades']
+        

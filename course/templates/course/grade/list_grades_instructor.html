@@ -1,0 +1,171 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 15px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-4">
+            <h3> My Grades </h3>
+        </div>
+        {% if user.is_authenticated and user.user_type == 'I' %}
+        <div class="col">
+            <a href="{% url 'course:create_extra_grade' course_id=course.id %}" class="btn btn-primary float-end">Create Extra Grade</a>
+        </div>
+        {% endif %}
+    </div>
+    <br>
+    
+    {% for assignment, students  in assignments.items %}
+        <h4> {{ assignment.title }} </h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Student Name</th>
+                    <th>Title</th>
+                    <th>Due Date</th>
+                    <th>Submission Date</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student  in students %}
+                    <tr>
+                        <td>Assignment</td>
+                        <td>{{ student.student }}</a></td>
+                        <td>{{ student.assignment.title }}</td>
+                        <td>{{ student.assignment.due_date }}</td>
+                        <td>{{ student.created_at }}</td>
+                        {% if student.grade %}
+                            <td>{{ student.grade }}</td>
+                        {% else %}
+                            <td>
+                                <form method='post'>
+                                    {% csrf_token %}
+                                    {{ assignment_grade_form | crispy }}
+                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                    <button type="submit" name="assignment_grad_form">
+                                        <i class="fa fa-paper-plane-top"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No assignment evaluations done so far. </td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+        <br><br>
+    {% endfor %}
+
+    {% for quiz, students  in quizzes.items %}
+        <h4> {{ quiz.name }} </h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Student Name</th>
+                    <th>Title</th>
+                    <th>Due Date</th>
+                    <th>Submission Date</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student  in students %}
+                    <tr>
+                        <td>Quiz</td>
+                        <td>{{ student.student }}</a></td>
+                        <td>{{ student.quiz.name }}</td>
+                        <td>{{ student.quiz.due_date }}</td>
+                        <td>{{ student.created_at }}</td>
+                        {% if student.total_score and student.total_score != -1 %}
+                            <td>{{ student.total_score }}</td>
+                        {% else %}
+                            <td>
+                                <form method='post'>
+                                    {% csrf_token %}
+                                    {{ quiz_grade_form.total_score | as_crispy_field }}
+                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    <input type="hidden" name="quiz_id" value="{{ student.quiz.id }}">
+                                    <button class="btn btn-primary" type="submit" name="quiz_grade_form">
+                                        Add Grade
+                                    </button>
+                                </form>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No quiz evaluations done so far. </td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+        <br><br>
+    {% endfor %}
+
+    {% for otherGrade, students  in otherGrades.items %}
+        <h4> {{ otherGrade.name }} </h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Student Name</th>
+                    <th>Title</th>
+                    <th>Due Date</th>
+                    <th>Submission Date</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student  in students %}
+                    <tr>
+                        <td>Extra</td>
+                        <td>{{ student.student }}</a></td>
+                        <td>{{ student.name }}</td>
+                        <td>-</td>
+                        <td>{{ student.created_at }}</td>
+                        {% if student.grade %}
+                            <td>{{ student.grade }}</td>
+                        {% else %}
+                            <td>Not evaluated</td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No extra evaluations done so far. </td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+        <br><br>
+    {% endfor %}
+
+
+</div>
+{% endblock content %}

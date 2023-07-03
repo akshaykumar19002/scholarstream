@@ -21,6 +21,7 @@
                 <th style="width: 25%;" scope="col">Submission Date</th>
                 <th>Content</th>
                 <th style="width: 25%;" scope="col">Files</th>
+                <th style="width: 25%;" scope="col">Grade</th>
             </tr>
         </thead>
         <tbody>
@@ -38,6 +39,28 @@
                         <a href="{{ file.file.url }}">Submission Link</a><br>
                     {% endfor %}
                 </td>
+                {% if user.user_type == 'I' %}
+                <td>
+                    {% if submission.grader %}
+                        <p> {{ submission.grade }}</p>
+                    {% else %}
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ grade_form.as_p }}
+                            <input type="hidden" name="submission_id" value="{{ submission.id }}">
+                            <button class="btn btn-primary" type="submit">Submit Grade</button>
+                        </form>
+                    {% endif %}
+                </td>
+                {% else %}
+                    <td>
+                        {% if submission.grader %}
+                            <p> {{ submission.grade }}</p>
+                        {% else %}
+                            <p>Not evaluated</p>
+                        {% endif %}
+                    </td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>

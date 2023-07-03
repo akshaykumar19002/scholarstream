@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
@@ -12,12 +13,13 @@ from user.models import UserModel
 from cart.cart import Cart
 
 from django.views import View
-from django.db import models
+from django.db import models, transaction
 
 from datetime import datetime
 from django.utils import timezone
 
 import json
+import csv
 
 
 @login_required(login_url='user:login')
@@ -252,10 +254,16 @@ def list_assignments(request, course_id):
     return render(request, 'course/assignment/list_assignments.html', context)
 
 
+class GradeForm(forms.ModelForm):
+    class Meta:
+        model = AssignmentSubmission
+        fields = ['grade']
+
+
 @login_required(login_url='user:login')
 def view_assignment(request, course_id, assignment_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
-    
+
     course = get_object_or_404(Course, id=course_id)
     assignment = get_object_or_404(Assignment, id=assignment_id)
 
@@ -263,33 +271,46 @@ def view_assignment(request, course_id, assignment_id):
         submissions = AssignmentSubmission.objects.filter(assignment=assignment, student=user)
     else:
         submissions = AssignmentSubmission.objects.filter(assignment=assignment)
-        
+
     if request.method == 'POST':
-        form = AssignmentSubmissionForm(request.POST)
-        file_form = SubmissionFileForm(request.POST, request.FILES)
+        if request.user.user_type == 'I':
+            grade_form = GradeForm(request.POST)
+            if grade_form.is_valid():
+                submission_id = request.POST.get('submission_id')
+                submission = AssignmentSubmission.objects.get(id=submission_id)
+                submission.grade = grade_form.cleaned_data['grade']
+                submission.grader = request.user
+                submission.save()
 
-        if form.is_valid() and file_form.is_valid():
-            submission = form.save(commit=False)
-            submission.assignment = assignment
-            submission.student = user
-            submission.save()
-
-            for f in request.FILES.getlist('file_field'):
-                SubmissionFile.objects.create(file=f, submission= submission)
-                
-            AssignmentProgress.objects.update_or_create(assignment=assignment, user=user, defaults={'is_complete': False})
-
-            return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
+                return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
         else:
-            context = {
-                'form': form,
-                'file_form': file_form,
-                'course': course,
-                'assignment': assignment,
-                'submissions': submissions,
-                'current_time': timezone.now()
-            }
-            return render(request, 'course/assignment/view_assignment.html', context)
+            form = AssignmentSubmissionForm(request.POST)
+            file_form = SubmissionFileForm(request.POST, request.FILES)
+
+            if form.is_valid() and file_form.is_valid():
+                submission = form.save(commit=False)
+                submission.assignment = assignment
+                submission.student = user
+                submission.save()
+
+                for f in request.FILES.getlist('file_field'):
+                    SubmissionFile.objects.create(file=f, submission=submission)
+
+                AssignmentProgress.objects.update_or_create(assignment=assignment, student=user,
+                                                            defaults={'is_complete': False})
+
+                return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
+            else:
+                context = {
+                    'form': form,
+                    'file_form': file_form,
+                    'course': course,
+                    'assignment': assignment,
+                    'submissions': submissions,
+                    'current_time': timezone.now(),
+                    'grade_form': GradeForm() if request.user.user_type == 'I' else None
+                }
+                return render(request, 'course/assignment/view_assignment.html', context)
     else:
         form = AssignmentSubmissionForm()
         file_form = SubmissionFileForm()
@@ -300,7 +321,8 @@ def view_assignment(request, course_id, assignment_id):
         'course': course,
         'assignment': assignment,
         'submissions': submissions,
-        'current_time': timezone.now()
+        'current_time': timezone.now(),
+        'grade_form': GradeForm() if request.user.user_type == 'I' else None
     }
     return render(request, 'course/assignment/view_assignment.html', context)
 
@@ -395,29 +417,99 @@ def attempt_quiz(request, course_id, quiz_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     quiz = get_object_or_404(Quiz, course__id=course_id, id=quiz_id)
     questions = quiz.questions.all()
-    
+
     if user.user_type != 'S':
         return redirect('user:forbidden')
 
     if request.method == 'POST':
-        form = QuizAttemptForm(request.POST)
-        if form.is_valid():
-            question_id = form.cleaned_data.get('question').id
-            attempts = QuizAttempt.objects.filter(user=user, quiz=quiz, question__id=question_id).count()
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        quiz_id = data.get('quiz_id')
+        answers = data.get('answers')
 
-            if attempts <= quiz.attempts_allowed:
-                form.save()  
-                
-                QuizProgress.objects.update_or_create(quiz=quiz, user=user, defaults={'is_complete': False})
+        try:
+            quiz = Quiz.objects.get(id=quiz_id)
+        except ObjectDoesNotExist:
+            return JsonResponse({'message': 'Quiz not found'}, status=404)
 
-                return redirect('course:list_quizzes', course_id=course_id)
-            return redirect('course:list_quizzes', course_id=course_id)
-        else:
-            print(form.errors)
-            return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course})
+        total_score = 0
+        ableToScore = True
+        response = ''
+
+        for question_id, answer in answers.items():
+            question = Question.objects.get(id=question_id)
+
+            if question.question_type == 'MCQ':
+                selected_choice = Choice.objects.get(id=answer[0])
+                response = selected_choice.choice_text
+                if selected_choice.is_correct:
+                    total_score += 1
+
+            elif question.question_type == 'MCMS':
+                selected_choices = Choice.objects.filter(id__in=answer)
+                for choice in selected_choices:
+                    response += choice.choice_text + ':'
+                if all(choice.is_correct for choice in selected_choices):
+                    total_score += 1
+
+            elif question.question_type == 'TF':
+                selected_choice = answer[0] == 'True'
+                response = answer[0]
+                choices = Choice.objects.filter(question=question)
+                correct_choice = None
+                for choice in choices:
+                    if choice.choice_text.lower() == answer[0]:
+                        selected_choice = choice
+                    if choice.is_correct:
+                        correct_choice = choice
+                if not correct_choice:
+                    ableToScore = False
+                elif selected_choice == correct_choice:
+                    total_score += 1
+
+            elif question.question_type == 'FITB':
+                response = answer[0]
+                correct_choice = Choice.objects.filter(question=question, is_correct=True).first()
+                if not correct_choice:
+                    ableToScore = False
+                elif correct_choice.choice_text.lower() == answer[0].lower():
+                    total_score += 1
+
+            quiz_attempt = QuizAttempt(
+                quiz=quiz,
+                user_id=user_id,
+                question=question,
+                answer_text=response
+            )
+
+            quiz_attempt.save()
+
+        quiz_progress = QuizProgress(
+            quiz=quiz,
+            student_id=user_id,
+            is_complete=True,
+            total_score=total_score if ableToScore else -1
+        )
+
+        quiz_progress.save()
+
+        return JsonResponse({'message': 'Quiz submitted successfully', 'total_score': total_score}, status=200)
     else:
         form = QuizAttemptForm(initial={'quiz': quiz, 'user': user})
         return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course})
+
+
+@login_required(login_url='user:login')
+def view_attempts(request, course_id, quiz_id):
+    course = get_object_or_404(Course, id=course_id)
+    student = get_object_or_404(get_user_model(), id=request.user.pk)
+    if student.user_type != 'S':
+        return redirect('user:forbidden')
+
+    quiz = get_object_or_404(Quiz, course__id=course_id, id=quiz_id)
+    attempts = QuizProgress.objects.filter(student=student, quiz=quiz)
+
+    return render(request, 'course/quiz/view_attempts.html', {'quiz': quiz, 'attempts': attempts, 'course': course})
 
 
 @login_required(login_url='user:login')
@@ -470,3 +562,110 @@ def course_search(request, search_keyword):
     coursesInCart = [item['course'].id for item in Cart(request)]
     allcourses = allcourses.exclude(id__in = coursesInCart)
     return render(request, 'course/list_course.html', {'allcourses': allcourses})
+
+
+@login_required(login_url='user:login')
+def list_grades(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = get_object_or_404(get_user_model(), id=request.user.pk)
+    
+    if user.user_type == 'S':
+        assignments = AssignmentProgress.objects.filter(assignment__course=course, student=user)
+        quizzes = QuizProgress.objects.filter(quiz__course=course, student=user)
+        otherGrades = OtherGrade.objects.filter(course=course, student=user)
+        context = {
+            'course': course,
+            'assignments': assignments,
+            'quizzes': quizzes,
+            'otherGrades': otherGrades
+        }
+        return render(request, 'course/grade/list_grades_student.html', context)
+    else:
+        if request.method == 'POST':
+            if 'assignment_grade_form' in request.POST:
+                assignment_grade_form = AssignmentGradeForm(request.POST)
+                student_id = request.POST.get('student_id')
+                assignment_id = request.POST.get('assignment_id')
+                student = get_object_or_404(get_user_model(), id=student_id)
+                assignment = get_object_or_404(Assignment, id=assignment_id)
+                if assignment_grade_form.is_valid():
+                    assignmentProgress = AssignmentProgress.objects.filter(assignment = assignment).first()
+                    if assignmentProgress == None:
+                        assignmentProgress = AssignmentProgress(assignment = assignment, student = student)
+                    assignmentProgress.grade = assignment_grade_form.cleaned_data['grade']
+                    assignmentProgress.save()                    
+            elif 'quiz_grade_form' in request.POST:
+                quiz_grade_form = QuizGradeForm(request.POST)
+                student_id = request.POST.get('student_id')
+                quiz_id = request.POST.get('quiz_id')
+                student = get_object_or_404(get_user_model(), id=student_id)
+                quiz = get_object_or_404(Quiz, id=quiz_id)
+                if quiz_grade_form.is_valid():
+                    quizProgress = QuizProgress.objects.filter(quiz = quiz).first()
+                    if quizProgress == None:
+                        quizProgress = QuizProgress(quiz = quiz, student = student)
+                    quizProgress.total_score = quiz_grade_form.cleaned_data['total_score']
+                    quizProgress.save()
+                    
+        assignments = {}
+        quizzes = {}
+        otherGrades = {}
+        for assignment in Assignment.objects.filter(course = course):
+            assignments[assignment] = AssignmentProgress.objects.filter(assignment = assignment)
+        for quiz in Quiz.objects.filter(course = course):
+            quizzes[quiz] = QuizProgress.objects.filter(quiz = quiz)
+            
+        oGrades = OtherGrade.objects.filter(course = course)
+        for otherGrade in oGrades:
+            otherGrades[otherGrade] = OtherGrade.objects.filter(name=otherGrade.name, course = course)
+            
+        context = {
+            'course': course,
+            'assignments': assignments,
+            'quizzes': quizzes,
+            'otherGrades': otherGrades,
+            'assignment_grade_form': AssignmentGradeForm(),
+            'quiz_grade_form': QuizGradeForm(),
+        }
+        return render(request, 'course/grade/list_grades_instructor.html', context)
+
+
+@login_required(login_url='user:login')
+def create_extra_grade(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    User = get_user_model()
+
+    if request.method == 'POST':
+        form = ExtraGradeForm(request.POST, request.FILES)
+        if form.is_valid():
+            grade_file = request.FILES.get('grades')
+            decoded_file = grade_file.read().decode('utf-8').splitlines()
+            reader = csv.DictReader(decoded_file)
+
+            with transaction.atomic():
+                for row in reader:
+                    student = User.objects.get(pk=int(row['student_id']))
+                    grade = OtherGrade(student=student, grade=row['grade'], course=course, 
+                                       name=form.cleaned_data['name'], 
+                                       description=form.cleaned_data['description'])
+                    grade.save()
+
+            return redirect('course:grades', course_id=course.id)
+        
+    form = ExtraGradeForm()
+    return render(request, 'course/grade/create_extra_grade.html', {'course': course, 'form': form})
+
+
+def download_sample_file(request, course_id):
+    User = get_user_model()
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="sample_grades.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['student_id', 'grade'])
+
+    students = User.objects.filter(courses__id=course_id)
+    for student in students:
+        writer.writerow([student.id, ''])
+
+    return response

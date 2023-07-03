@@ -4,11 +4,9 @@
 
 {% block content %}
 <style>
-
     body {
         background-color: gray;
     }
-
 </style>
 <div class="container-fluid col-6 bg-white shadow-md p-5 form-layout">
     <h3>Create Quiz</h3>
@@ -18,7 +16,7 @@
         {% csrf_token %}
 
         <input type="text" id="quizId" name="quizId" value="{{quiz.id}}" style="display: none;">
-        
+
         <div class="form-group">
             <label class="form-label" for="quizName">Quiz Name</label><br>
             <input class="form-control" type="text" id="quizName" name="quizName"><br>
@@ -42,7 +40,7 @@
         </div>
 
         <br><br>
-        <button type="button" class = "btn btn-primary" id="addQuestionButton">Add Question</button>
+        <button type="button" class="btn btn-primary" id="addQuestionButton">Add Question</button>
         <br>
         <br>
         <input class="btn btn-primary btn-lg w-100" type="submit" value="Submit">
@@ -52,69 +50,83 @@
         const QUIZ_TYPES = ['MCQ', 'MCMS', 'FITB', 'TF'];
 
         function addQuestion() {
-            questionCount ++;
+            questionCount++;
+
             const questionDiv = $('<div>').attr('id', 'question' + questionCount);
             questionDiv.append($('<input>').attr('type', 'text').attr('name', 'questionId' + questionCount).attr('style', 'display: none;'));
-    
+
+            var addChoiceButton = $('<button>').attr('type', 'button').attr('class', 'btn btn-primary').text('Add Choice').on('click', function() {
+                addChoice(questionDiv, "", false, false);
+            });
+
             questionDiv.append($('<div class="form-group">'));
             questionDiv.append($('<label>').attr('class', 'form-label').text('Question ' + questionCount + ' Text'));
             questionDiv.append($('<input>').attr('class', 'form-control').attr('type', 'text').attr('name', 'questionText' + questionCount));
             questionDiv.append($('</div>'));
-            
+
             questionDiv.append($('<div class="form-group">'));
             questionDiv.append($('<label>').attr('class', 'form-label').text('Question ' + questionCount + ' Type'));
             const select = $('<select>').attr('class', 'form-select').attr('name', 'questionType' + questionCount);
             $.each(QUIZ_TYPES, function(i, val) {
                 select.append($('<option>').attr('value', val).text(val));
             });
+            select.change(function() {
+                questionDiv.children('div[id^="choice"]').remove();
+
+                switch($(this).val()) {
+                    case 'TF':
+                        addChoice(questionDiv, "True", true, true, true);
+                        addChoice(questionDiv, "False", false, true, true);
+                        break;
+                    case 'FITB':
+                        addChoice(questionDiv, "", false, false, true);
+                        break;
+                    default:
+                        questionDiv.append(addChoiceButton);
+                        break;
+                }
+            });
+
             questionDiv.append(select);
             questionDiv.append($('</div><br>'));
-            
-            const removeQuestionButton = $('<button>').attr('name', 'question' + questionCount).attr('type', 'button').attr('class', 'btn btn-danger').text('Remove Question').on('click', function() {
-                document.getElementById(this.name).remove();
-            });
-            questionDiv.append(removeQuestionButton);
 
-            questionDiv.append($('<button>').attr('type', 'button').attr('class', 'btn btn-primary').text('Add Choice').on('click', function() {
-                const choiceCount = questionDiv.children('div[id^="choice"]').length + 1;
+            if (['MCQ', 'MCMS'].includes(QUIZ_TYPES[0])) {
+                questionDiv.append(addChoiceButton);
+            }
 
-                const choiceDiv = $('<div>').attr('id', 'choice' + questionCount + '_' + choiceCount);
-
-                choiceDiv.append($('<input>').attr('type', 'text').attr('name', 'choiceId' + questionCount + '_' + choiceCount).attr('style', 'display: none;'));
-                
-                const choiceTextDiv = $('<div class="form-group">');
-                choiceTextDiv.append($('<label>').attr('class', 'form-label').text('Choice ' + choiceCount + ' Text'));
-                choiceTextDiv.append($('<input>').attr('class', 'form-control').attr('type', 'text').attr('name', 'choiceText' + questionCount + '_' + choiceCount));
-                choiceTextDiv.append($('</div>'));
-
-                choiceDiv.append(choiceTextDiv);
-
-                const choiceCheckDiv = $('<div class="form-group">');
-                choiceCheckDiv.append($('<label>').attr('class', 'form-check-label').text('Is Correct'));
-                choiceCheckDiv.append('&nbsp;')
-                choiceCheckDiv.append($('<input>').attr('class', 'form-check-input').attr('type', 'checkbox').attr('name', 'isCorrect' + questionCount + '_' + choiceCount));
-                choiceCheckDiv.append($('</div>'));
-                
-                choiceDiv.append(choiceCheckDiv);
-
-                const removeChoiceButton = $('<button>').attr('type', 'button').attr('class', 'btn btn-danger').text('Remove Choice').on('click', function() {
-                    $(this).prev().prev().remove();
-                    $(this).prev().remove();
-                    $(this).remove();
-                });
-
-                choiceDiv.append(removeChoiceButton);
-                choiceDiv.append($('</div>'));
-                questionDiv.append(choiceDiv);
-            }));
             questionDiv.append($('<br><br>'));
-                
             $('#questionsDiv').append(questionDiv);
-
         }
 
-        $('#addQuestionButton').on('click', addQuestion);
-        
+        function addChoice(questionDiv, choiceText, isCorrect, isDisabled, hideRemoveButton) {
+            const choiceDiv = $('<div>').attr('id', 'choice' + ($('#questionsDiv div[id^="choice"]').length + 1));
+            choiceDiv.append($('<input>').attr('type', 'text').attr('name', 'choiceId' + ($('#questionsDiv div[id^="choice"]').length + 1)).attr('style', 'display: none;'));
+            const choiceTextDiv = $('<div class="form-group">');
+            choiceTextDiv.append($('<label>').attr('class', 'form-label').text('Choice Text'));
+            choiceTextDiv.append($('<input>').attr('class', 'form-control').attr('type', 'text').attr('name', 'choiceText' + ($('#questionsDiv div[id^="choice"]').length + 1)).attr('value', choiceText).attr('disabled', isDisabled));
+            const choiceCheckDiv = $('<div class="form-check">');
+            choiceCheckDiv.append($('<input>').attr('class', 'form-check-input').attr('type', 'checkbox').attr('name', 'isCorrect' + ($('#questionsDiv div[id^="choice"]').length + 1)).attr('checked', isCorrect));
+            choiceCheckDiv.append($('<label>').attr('class', 'form-check-label').text('Is Correct'));
+
+            var removeChoiceButton = $('<button>').attr('type', 'button').attr('class', 'btn btn-danger').text('Remove Choice').on('click', function() {
+                $(this).prev().prev().remove();
+                $(this).prev().remove();
+                $(this).remove();
+            });
+
+            choiceDiv.append(choiceTextDiv);
+            choiceDiv.append(choiceCheckDiv);
+
+            if (!hideRemoveButton) {
+                choiceDiv.append(removeChoiceButton);
+            }
+            choiceDiv.append($('</div>'));
+            questionDiv.append(choiceDiv);
+        }
+
+        $('#addQuestionButton').click(function() {
+            addQuestion();
+        });
 
         $('#quizForm').on('submit', function(e) {
             e.preventDefault();
@@ -149,7 +161,7 @@
                 data.questions.push(questionData);
             });
 
-            
+
             $.ajax({
                 type: 'POST',
                 url: '{% url 'course:create_quiz' course_id=course.id %}',  // Update with your view URL
@@ -169,7 +181,6 @@
         });
 
     </script>
-
 
 </div>
 {% endblock content %}

@@ -28,8 +28,12 @@ urlpatterns = [
     path('<int:course_id>/quiz/<int:quiz_id>/publish/', views.publish_quiz, name='publish_quiz'),
     path('<int:course_id>/quiz/<int:quiz_id>/unpublish/', views.hide_quiz, name='hide_quiz'),
     path('<int:course_id>/quiz/<int:quiz_id>/attempt', views.attempt_quiz, name='attempt_quiz'),
+    path('<int:course_id>/quiz/<int:quiz_id>/view_attempts', views.view_attempts, name='view_attempts'),
     
-    path('progress/<int:course_id>/', views.view_course_progress, name='progress'),
+    path('<int:course_id>/progress/', views.view_course_progress, name='progress'),
+    path('<int:course_id>/grades/', views.list_grades, name='grades'),
+    path('<int:course_id>/grades/add/', views.create_extra_grade, name='create_extra_grade'),
+    path('<int:course_id>/grades/download_sample_file', views.download_sample_file, name='download_sample_file'),
     
     path('search/<str:search_keyword>', views.course_search, name='course_search'),
     

@@ -3,39 +3,84 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-
 <div class="container-fluid">
     <h1>{{ quiz.name }}</h1>
     <p>{{ quiz.description }}</p>
 
-    <form method="post">
+    <form method="post" id="quiz-form">
         {% csrf_token %}
         {{ form.quiz.as_hidden }}
         {{ form.user.as_hidden }}
-        {% for question in questions %}
-            <h2>Question {{ forloop.counter }}: {{ question.question_text }}</h2>
-            {{ form.question.as_hidden }}
-            {% if question.question_type == 'MCQ' or question.question_type == 'MCMS' %}
-                {% for choice in question.choices.all %}
+        {% for question in questions%}
+            <div class="question" data-id="{{ question.id }}" data-type="{{ question.question_type }}">
+                <h2>Question {{ forloop.counter }}: {{ question.question_text }}</h2>
+                {{ form.question.as_hidden }}
+                {% if question.question_type == 'MCQ' or question.question_type == 'MCMS' %}
+                    {% for choice in question.choices.all %}
+                        <p>
+                            {% if question.question_type == 'MCMS' %}
+                                <input type="checkbox" name="choice_{{ question.id }}" value="{{ choice.id }}">
+                            {% else %}
+                                <input type="radio" name="choice_{{ question.id }}" value="{{ choice.id }}">
+                            {% endif %}
+                            {{ choice.choice_text }}
+                        </p>
+                    {% endfor %}
+                {% elif question.question_type == 'FITB' %}
+                    <label for="answer_text_{{ question.id }}">Response: </label>
+                    <input id="answer_text_{{ question.id }}" type="text" name="answer_text_{{ question.id }}">
+                {% else %}
                     <p>
-                        {% if question.question_type == 'MCMS' %}
-                            <input type="checkbox" name="choice_{{ question.id }}" value="{{ choice.id }}">
-                        {% else %}
-                            <input type="radio" name="choice_{{ question.id }}" value="{{ choice.id }}">
-                        {% endif %}
-                        {{ choice.choice_text }}
+                        <input type="radio" name="choice_{{ question.id }}" value="True"> True
+                        <input type="radio" name="choice_{{ question.id }}" value="False"> False
                     </p>
-                {% endfor %}
-            {% elif question.question_type == 'FITB' %}
-                <input type="text" name="answer_text_{{ question.id }}">
-            {% else %}
-                <p>
-                    <input type="radio" name="choice_{{ question.id }}" value="True"> True
-                    <input type="radio" name="choice_{{ question.id }}" value="False"> False
-                </p>
-            {% endif %}
+                {% endif %}
+            </div>
         {% endfor %}
         <input class="btn btn-primary" type="submit" value="Submit Quiz">
     </form>
 </div>
+
+<script>
+  document.getElementById('quiz-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var user_id = document.getElementById('id_user').value;
+    var quiz_id = document.getElementById('id_quiz').value;
+    var data = {
+        'user_id': user_id,
+        'quiz_id': quiz_id,
+        'answers': {}
+    };
+    var questions = document.getElementsByClassName('question');
+    Array.from(questions).forEach(function(question){
+        var question_id = question.dataset.id;
+        var question_type = question.dataset.type;
+        if(question_type == "MCQ" || question_type == "MCMS") {
+            var choices = document.querySelectorAll(`input[name="choice_${question_id}"]:checked`);
+            data['answers'][question_id] = Array.from(choices).map(c => c.value);
+        } else if(question_type == "FITB") {
+            var answer = document.querySelector(`input[name="answer_text_${question_id}"]`).value;
+            data['answers'][question_id] = answer;
+        } else {
+            var choice = document.querySelector(`input[name="choice_${question_id}"]:checked`);
+            data['answers'][question_id] = choice ? choice.value : null;
+        }
+    });
+    console.log(data)
+    fetch('{% url 'course:attempt_quiz' course.id quiz.id %}', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': this.csrfmiddlewaretoken.value,
+        },
+    }).then(response => response.json())
+    .then(data => {
+        console.log(data)
+        window.location.href = '{% url 'course:view_attempts' course.id quiz.id %}'
+    })
+    .catch((error) => console.error('Error:', error));
+});
+</script>
+
 {% endblock content %}

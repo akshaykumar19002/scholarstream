@@ -1,0 +1,41 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% block content %}
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <div class="container-fluid p-2">
+    <h2>Quiz Attempts for {{ quiz.name }}</h2>
+    <table>
+        <tr>
+            <th>Attempt #</th>
+            <th>Attempt Date/Time</th>
+            <th>Score</th>
+        </tr>
+        {% for attempt in attempts %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ attempt.created_at }}</td>
+                {% if attempt.total_score == -1 %}
+                    <td> Not evaluated </td>
+                {% else %}
+                    <td>{{ attempt.total_score }}</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+    </div>
+{% endblock %}

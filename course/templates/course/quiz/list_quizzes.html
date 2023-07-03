@@ -4,81 +4,98 @@
 
 {% block content %}
 
-<style>
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 15px;
-        text-align: left;
-    }
-    th {
-        background-color: #f2f2f2;
-    }
-</style>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-4">
-            <h3> Quizzes </h3>
+        th, td {
+            border: 1px solid black;
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-4">
+                <h3> Quizzes </h3>
+            </div>
+            {% if user.is_authenticated and user.user_type == 'I' %}
+                <div class="col">
+                    <a href="{% url 'course:create_quiz' course_id=course.id %}" class="btn btn-primary float-end">Create
+                        Quiz</a>
+                </div>
+            {% endif %}
         </div>
-        {% if user.is_authenticated and user.user_type == 'I' %}
-        <div class="col">
-            <a href="{% url 'course:create_quiz' course_id=course.id %}" class="btn btn-primary float-end">Create Quiz</a>
-        </div>
+        <br>
+
+        {% if quizzes|length == 0 %}
+
+            <div class="alert alert-info" role="alert">
+                No quizzes found
+            </div>
+
+        {% else %}
+
+
+            <table>
+                <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Creator</th>
+                    {% if user.user_type == 'I' %}
+                        <th>Published</th>
+                    {% endif %}
+                    <th>Creation Date</th>
+                    <th>Due Date</th>
+                    {% if user.user_type == 'S' %}
+                        <th>View Attempts</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for quiz in quizzes %}
+                    <tr>
+                        {% if user.is_authenticated and user.user_type == 'I' %}
+                            <td>
+                                <a href="{% url 'course:view_quiz' course_id=course.id quiz_id=quiz.id %}">{{ quiz.name }}</a>
+                            </td>
+                        {% else %}
+                            <td>
+                                <a href="{% url 'course:attempt_quiz' course_id=course.id quiz_id=quiz.id %}">{{ quiz.name }}</a>
+                            </td>
+                        {% endif %}
+                        <td>{{ quiz.description }}</td>
+                        <td>{{ quiz.creator.get_full_name }}</td>
+                        {% if user.user_type == 'I' %}
+                            {% if quiz.is_published %}
+                                <td class="text-center"><span><i class="fa fa-check"></i></span></td>
+                            {% else %}
+                                <td class="text-center"><span><i class="fa fa-xmark"></i></span></td>
+                            {% endif %}
+                        {% endif %}
+                        <td>{{ quiz.creation_date }}</td>
+                        <td>{{ quiz.due_date }}</td>
+                        {% if user.user_type == 'S' %}
+                            <td><a href="{% url 'course:view_attempts' course.id quiz.id %}">Click Here</a></td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">No quizzes found</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
         {% endif %}
+
     </div>
-    <br>
-
-    {% if quizzes|length == 0 %}
-
-    <div class="alert alert-info" role="alert">
-        No quizzes found
-    </div>
-
-    {% else %}
-
-    
-<table>
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Creator</th>
-            <th>Published</th>
-            <th>Creation Date</th>
-            <th>Due Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for quiz in quizzes %}
-            <tr>
-                {% if user.is_authenticated and user.user_type == 'I' %}
-                    <td><a href="{% url 'course:view_quiz' course_id=course.id quiz_id=quiz.id %}">{{ quiz.name }}</a></td>                
-                {% else %}
-                    <td><a href="{% url 'course:attempt_quiz' course_id=course.id quiz_id=quiz.id %}">{{ quiz.name }}</a></td>
-                {% endif %}
-                <td>{{ quiz.description }}</td>
-                <td>{{ quiz.creator.get_full_name }}</td>
-                {% if quiz.is_published %}
-                    <td class="text-center"><span><i class="fa fa-check"></i></span></td>
-                {% else %}
-                    <td class="text-center"><span><i class="fa fa-xmark"></i></span></td>
-                {% endif %}
-                <td>{{ quiz.creation_date }}</td>
-                <td>{{ quiz.due_date }}</td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="5">No quizzes found</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-{% endif %}
-
-</div>
 {% endblock content %}
