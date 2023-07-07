@@ -1,0 +1,52 @@
+{% extends "course/dashboard/base_dashboard.html" %}
+
+{% block content %}
+{% load extra_filters %}
+<style>
+    /* Create stars */
+    .star {
+        font-size: 2em;
+        color: #ccc;
+    }
+    /* Color stars */
+    .star.gold {
+        color: #E6B600;
+    }
+</style>
+<div class="container">
+    <h1>{{ course.name }}</h1>
+    <p>by {{ instructor }}</p>
+    {% if user.is_authenticated and user.user_type == 'S' %}
+        <div class="pt-3 float-end">
+            <a href="{% url 'feedback:add_review' course.id %}" class="btn btn-primary">Add Review</a>
+        </div>
+    {% endif %}
+    <hr>
+    <h2>Average Rating: {{ course.avg_rating }}</h2>
+    <p>{{ course.num_reviews }} reviews</p>
+    <hr>
+    <h2>Reviews:</h2>
+    <div class="row">
+        {% for review in reviews %}
+        <div class="card col-md-5 m-4">
+            <div class="card-body">
+                <h5>{% if review.anonymous %}Anonymous{% else %}{{ review.user.username }}{% endif %}</h5>
+                {% for i in review.rating|times %}
+            <span class="star gold">&#9733;</span>
+            {% endfor %}
+            <!-- Generate unfilled stars -->
+            {% for i in review.rating|range_to %}
+            <span class="star">&#9733;</span>
+            {% endfor %}
+                <p class="card-text">{{ review.comment }}</p>
+                <p class="card-footer">Posted on {{ review.date_posted }}</p>
+            </div>
+        </div>
+        <br>
+        {% empty %}
+        <p>No reviews yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+
+    body {
+        background-color: gray;
+    }
+
+    .rating-star {
+        display: none;
+    }
+    /* Create stars */
+    .star {
+        font-size: 2em;
+        color: #ccc;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    /* On hover, color stars up to and including the one hovered over */
+    .rating-star:not(:checked) ~ .star:hover,
+    .rating-star:not(:checked) ~ .star:hover ~ .star {
+        color: #FDE16D;
+    }
+    /* Color stars to the right of the selected one */
+    .rating-star:checked ~ .star {
+        color: #E6B600;
+    }
+    .rating-stars {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        align-items: center; /* Align items vertically in the middle */
+    }
+
+</style>
+<div class="container-fluid col-6 bg-white shadow-md p-5 form-layout">
+    <h3>Add Review</h3>
+    <hr><br>
+
+    <form method="post">
+        {% csrf_token %}
+        <label>Rating</label>
+        <div class="rating-stars">
+            {% for choice in form.rating %}
+            <input type="radio" class="rating-star" name="rating" value="{{ choice.data.value }}" id="star{{ choice.data.value }}">
+            <label class="star" for="star{{ choice.data.value }}">&#9733;</label>
+            {% endfor %}
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="{{ form.comment.id_for_label }}">Review</label>
+            {{ form.comment }}
+        </div>
+        <br>
+
+        <div class="form-group">
+            <label for="{{ form.anonymous.id_for_label }}">Anonymous</label>
+            {{ form.anonymous }}
+        </div>
+        <br>
+        
+        <button class="btn btn-primary btn-lg w-100" type="submit">Save Review</button>
+    </form>
+
+</div>
+{% endblock content %}

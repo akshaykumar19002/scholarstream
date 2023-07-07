@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'mathfilters',
     'crispy_forms',
     "crispy_bootstrap5",
-    'paypal.standard.ipn'
+    'paypal.standard.ipn',
+    'feedback.apps.FeedbackConfig',
 ]
 
 PAYPAL_TEST = True
