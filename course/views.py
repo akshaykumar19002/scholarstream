@@ -79,6 +79,14 @@ def dropout(request, pk):
     return redirect('course:list')
 
 
+@login_required(login_url='user:login')
+def delete_course(request, pk):
+    if request.user.user_type == 'I':
+        course = get_object_or_404(Course, pk=pk)
+        course.delete()
+        return redirect('course:list')
+    return redirect('user:forbidden')
+
 class AddLesson(LoginRequiredMixin, View):
     
     def get(self, request, course_id):
@@ -254,10 +262,14 @@ def list_assignments(request, course_id):
     return render(request, 'course/assignment/list_assignments.html', context)
 
 
-class GradeForm(forms.ModelForm):
-    class Meta:
-        model = AssignmentSubmission
-        fields = ['grade']
+
+@login_required(login_url='user:login')
+def delete_assignment(request, course_id, assignment_id):
+    if request.user.user_type == 'I':
+        assignment = get_object_or_404(Assignment, id=assignment_id)
+        assignment.delete()
+        return redirect('course:list_assignments', course_id=course_id)
+    return redirect('user:forbidden')
 
 
 @login_required(login_url='user:login')

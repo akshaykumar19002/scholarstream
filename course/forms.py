@@ -116,21 +116,24 @@ class ContentForm(forms.ModelForm):
 class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = ['title', 'description', 'due_date']
+        fields = ['title', 'description', 'due_date', 'attemptsAllowed']
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Enter assignment title'}),
             'description': Textarea(attrs={'placeholder': 'Enter assignment description'}),
-            'due_date': DateTimeInput(attrs={'type': 'datetime-local'})
+            'due_date': DateTimeInput(attrs={'type': 'datetime-local'}),
+            'attemptsAllowed': NumberInput(attrs={'placeholder': 'Enter number of attempts allowed'}),
         }
         labels = {
             'title': 'Assignment Title',
             'description': 'Assignment Description',
-            'due_date': 'Due Date'
+            'due_date': 'Due Date',
+            'attemptsAllowed': 'Attempts Allowed',
         }
         help_texts = {
             'title': 'Enter a title for your assignment.',
             'description': 'Enter a description for your assignment.',
-            'due_date': 'Enter a due date for your assignment.'
+            'due_date': 'Enter a due date for your assignment.',
+            'attemptsAllowed': 'Enter the number of attempts allowed for your assignment.',
         }
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -152,6 +155,12 @@ class MultipleFileField(forms.FileField):
 
 class AssignmentFileForm(forms.Form):
     file_field = MultipleFileField(required=False)
+
+
+class GradeForm(forms.ModelForm):
+    class Meta:
+        model = AssignmentSubmission
+        fields = ['grade']
 
 
 class AssignmentSubmissionForm(forms.ModelForm):

@@ -104,13 +104,13 @@ class LessonProgress(models.Model):
 
 
 class Assignment(models.Model):
-
     course = models.ForeignKey(Course, related_name='assignments', on_delete=models.CASCADE)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_assignments', on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField()
     due_date = models.DateTimeField()
     creation_date = models.DateTimeField(auto_now_add=True)
+    attemptsAllowed = models.PositiveIntegerField(default=1)
 
 
 class AssignmentFile(models.Model):

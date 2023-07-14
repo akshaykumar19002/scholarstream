@@ -10,6 +10,7 @@ urlpatterns = [
     path('<int:pk>/', views.course_dashboard, name='detail'),
     path('<int:pk>/enroll', views.enroll_course, name='enroll'),
     path('<int:pk>/dropout', views.dropout, name='dropout'),
+    path('<int:pk>/delete', views.delete_course, name='delete'),
     
     path('<int:course_id>/add_lesson/', views.AddLesson.as_view(), name='add_lesson'),
     path('<int:course_id>/lessons/', views.list_lessons, name='list_lessons'),
@@ -20,6 +21,7 @@ urlpatterns = [
     path('<int:course_id>/create_assignment/', views.create_assignment, name='create_assignment'),
     path('<int:course_id>/assignments/', views.list_assignments, name='list_assignments'),
     path('<int:course_id>/assignment/<int:assignment_id>/', views.view_assignment, name='view_assignment'),
+    path('<int:course_id>/assignment/<int:assignment_id>/delete/', views.delete_assignment, name='delete_assignment'),
 
     path('<int:course_id>/list_quiz/', views.list_quizzes, name='list_quizzes'),
     path('<int:course_id>/quiz/', views.add_quiz, name='create_quiz'),

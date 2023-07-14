@@ -7,9 +7,18 @@
 {% block content %}
 <div class="container-fluid px-5">
   
-    <h1>{{ assignment.title }}</h1>
-    <p>{{ assignment.description }}</p>
-    <hr>
+    <div class="row">
+        <div class="col-md-6">
+            <h1>{{ assignment.title }}</h1>
+            <p>{{ assignment.description }}</p>
+        </div>
+        <div class="col-md-1 offset-md-5">
+            {% if user.is_authenticated and user.user_type == 'I' %}
+                <a href="{% url 'course:delete_assignment' course.id assignment.id %}" class="float-end btn btn-primary" >Delete</a>
+            {% endif %}
+        </div>
+        <hr>
+    </div>
 
     <h2>Submissions</h2>
     <table class="table table-striped">

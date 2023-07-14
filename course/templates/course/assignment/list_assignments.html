@@ -34,25 +34,25 @@
 <table>
     <thead>
         <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Creator</th>
-            <th>Creation Date</th>
-            <th>Due Date</th>
+            <th class="text-center">Title</th>
+            <th class="text-center">Description</th>
+            <th class="text-center">Attempts Allowed</th>
+            <th class="text-center">Creation Date</th>
+            <th class="text-center">Due Date</th>
         </tr>
     </thead>
     <tbody>
         {% for assignment in assignments %}
             <tr>
-                <td><a href="{% url 'course:view_assignment' course_id=course.id assignment_id=assignment.id %}">{{ assignment.title }}</a></td>
-                <td>{{ assignment.description }}</td>
-                <td>{{ assignment.creator.get_full_name }}</td>
-                <td>{{ assignment.created_at }}</td>
-                <td>{{ assignment.due_date }}</td>
+                <td class="text-center"><a href="{% url 'course:view_assignment' course_id=course.id assignment_id=assignment.id %}">{{ assignment.title }}</a></td>
+                <td class="text-center">{{ assignment.description }}</td>
+                <td class="text-center">{{ assignment.attemptsAllowed }}</td>
+                <td class="text-center">{{ assignment.creation_date }}</td>
+                <td class="text-center">{{ assignment.due_date }}</td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="5">No assignments found</td>
+                <td  class="text-center" colspan="5">No assignments found</td>
             </tr>
         {% endfor %}
     </tbody>

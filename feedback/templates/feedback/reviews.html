@@ -32,12 +32,12 @@
             <div class="card-body">
                 <h5>{% if review.anonymous %}Anonymous{% else %}{{ review.user.username }}{% endif %}</h5>
                 {% for i in review.rating|times %}
-            <span class="star gold">&#9733;</span>
-            {% endfor %}
-            <!-- Generate unfilled stars -->
-            {% for i in review.rating|range_to %}
-            <span class="star">&#9733;</span>
-            {% endfor %}
+                    <span class="star gold">&#9733;</span>
+                {% endfor %}
+                <!-- Generate unfilled stars -->
+                {% for i in review.rating|range_to %}
+                    <span class="star">&#9733;</span>
+                {% endfor %}
                 <p class="card-text">{{ review.comment }}</p>
                 <p class="card-footer">Posted on {{ review.date_posted }}</p>
             </div>
