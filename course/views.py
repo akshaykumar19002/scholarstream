@@ -19,6 +19,8 @@ from django.utils import timezone
 
 import json
 import csv
+from wsgiref.util import FileWrapper
+import io
 
 
 @login_required(login_url='user:login')
@@ -340,6 +342,39 @@ def view_assignment(request, course_id, assignment_id):
         'grade_form': GradeForm() if request.user.user_type == 'I' else None
     }
     return render(request, 'course/assignment/view_assignment.html', context)
+
+
+@login_required(login_url='user:login')
+def view_assignment_submission(request, course_id, submission_id):
+    submission = get_object_or_404(AssignmentSubmission, id=submission_id)
+    course = get_object_or_404(Course, id=course_id)
+    if request.method == 'POST':
+        if request.user.user_type == 'I':
+            grade_form = GradeForm(request.POST)
+            if grade_form.is_valid():
+                submission_id = request.POST.get('submission_id')
+                submission = AssignmentSubmission.objects.get(id=submission_id)
+                submission.grade = grade_form.cleaned_data['grade']
+                submission.grader = request.user
+                submission.save()
+                return redirect('course:view_submission', course_id=course.id, submission_id=submission.id)
+    context = {
+        'course': course,
+        'submission': submission,
+        'grade_form': GradeForm() if request.user.user_type == 'I' else None
+    }
+    return render(request, 'course/assignment/view_submission.html', context)
+
+
+@login_required(login_url='user:login')
+def download_assignment_submission_content(request, course_id, submission_id):
+    submission = get_object_or_404(AssignmentSubmission, id=submission_id)
+    filename = 'assignment_' + str(submission.assignment.id) + '_' + str(submission.id) + '_' + str(submission.student.id) + '_' + submission.student.first_name + '.txt'
+    file_like_object = io.BytesIO(submission.content.encode())
+    file_wrapper = FileWrapper(file_like_object)
+    response = HttpResponse(file_wrapper, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+    return response
 
 
 @login_required(login_url='user:login')
