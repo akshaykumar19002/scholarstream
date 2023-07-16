@@ -13,6 +13,10 @@ class Cart:
             cart = self.session['session-key'] = {}
 
         self.cart = cart
+        
+    def clear(self):
+        del self.session['session-key']
+        self.session.modified = True
 
     def add(self, course):
         course_id = str(course.id)

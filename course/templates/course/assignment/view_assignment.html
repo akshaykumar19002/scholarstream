@@ -77,7 +77,10 @@
 
     {% if request.user.user_type == 'S' %}
         <br><hr><br>
-        {% if assignment.due_date > current_time %}
+        {% if submissions|length >= assignment.attemptsAllowed  %}
+            <h2>Assignment is closed</h2>
+            <p> You don't have any attempts left </p>
+        {% elif assignment.due_date > current_time %}
             <h2>Submit Assignment</h2>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -85,7 +88,6 @@
                 {{ file_form|crispy }}
                 <button class="btn btn-primary" type="submit">Submit Assignment</button>
             </form>
-
         {% else %}
             <h2>Assignment is closed</h2>
             <p>No submissions are allowed</p>

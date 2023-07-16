@@ -2,30 +2,65 @@
 
 {% block content %}
     <div class="container-fluid bg-white shadow-md p-5 col-sm-6 form-layout">
-        <h2 class="my-3">Add Course</h2>
+        <h2 class="my-3 text-center">Add Course</h2>
+        <br>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
                 {{ form.name.label_tag }}
                 {{ form.name }}
                 <small id="nameHelpBlock" class="form-text text-muted">{{ form.name.help_text }}</small>
+                {% if form.name.errors %}
+                    {% for error in form.name.errors %}
+                        <p class="text-danger"> {{ form.name.errors }} </p>
+                    {% endfor %}
+                {% endif %}
             </div>
+            <br>
             <div class="form-group">
                 {{ form.description.label_tag }}
                 {{ form.description }}
                 <small class="form-text text-muted">{{ form.description.help_text }}</small>
+                {% if form.description.errors %}
+                    {% for error in form.description.errors %}
+                        <p class="text-danger"> {{ form.description.errors }} </p>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div class="form-check">
                 {{ form.is_paid }}
                 {{ form.is_paid.label_tag }}
                 <small class="form-text text-muted">{{ form.is_paid.help_text }}</small>
+                {% if form.is_paid.errors %}
+                    {% for error in form.is_paid.errors %}
+                        <p class="text-danger"> {{ form.is_paid.errors }} </p>
+                    {% endfor %}
+                {% endif %}
             </div>
+            <br>
             <div class="form-group">
                 {{ form.thumbnail.label_tag }}
                 {{ form.thumbnail }}
                 <small class="form-text text-muted">{{ form.thumbnail.help_text }}</small>
+                {% if form.thumbnail.errors %}
+                    {% for error in form.thumbnail.errors %}
+                        <p class="text-danger"> {{ form.thumbnail.errors }} </p>
+                    {% endfor %}
+                {% endif %}
             </div>
-            <button type="submit" class="btn btn-primary">Add Course</button>
+            <br>
+            <div class="form-group">
+                {{ form.price.label_tag }}
+                {{ form.price }}
+                <small class="form-text text-muted">{{ form.price.help_text }}</small>
+                {% if form.price.errors %}
+                    {% for error in form.price.errors %}
+                        <p class="text-danger"> {{ error }} </p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <br>
+            <button type="submit" class="btn btn-primary w-100 btn-lg">Add Course</button>
         </form>
         <br>
     </div>

@@ -19,41 +19,69 @@
         <div id="div_id_title" class="form-group">
             {{ form.title.label_tag }}
             {{ form.title }}
+            {% for error in form.title.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
+            
         </div>
         <br>
         <div id="div_id_content_type" class="form-group">
             {{ form.content_type.label_tag }}
             {{ form.content_type }}
+            {% for error in form.content_type.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         <br>
         <div id="div_id_text_content" class="form-group">
             {{ form.text_content.label_tag }}
             {{ form.text_content }}
+            {% for error in form.text_content.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         <div id="div_id_image_content" class="form-group" style="display:none">
             {{ form.image_content.label_tag }}
             {{ form.image_content }}
+            {% for error in form.image_content.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         <div id="div_id_pdf_content" class="form-group" style="display:none">
             {{ form.pdf_content.label_tag }}
             {{ form.pdf_content }}
+            {% for error in form.pdf_content.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         <div id="div_id_webpage_content" class="form-group" style="display:none">
             {{ form.webpage_content.label_tag }}
             {{ form.webpage_content }}
+            {% for error in form.webpage_content.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         <div id="div_id_audio_content" class="form-group" style="display:none">
             {{ form.audio_content.label_tag }}
             {{ form.audio_content }}
+            {% for error in form.audio_content.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         <div id="div_id_video_content" class="form-group" style="display:none">
             {{ form.video_content.label_tag }}
             {{ form.video_content }}
+            {% for error in form.video_content.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         
         <div id="div_id_other_content" class="form-group" style="display:none">
             {{ form.other_content.label_tag }}
             {{ form.other_content }}
+            {% for error in form.other_content.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
         </div>
         <br>
         <button class="btn btn-primary btn-lg w-100" type="submit">Add Content</button>

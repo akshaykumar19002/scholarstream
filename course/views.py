@@ -9,7 +9,6 @@ from django.db.models import Q
 
 from .forms import *
 from .models import *
-from user.models import UserModel
 from cart.cart import Cart
 
 from django.views import View
@@ -31,7 +30,11 @@ def add_course(request):
         form = CourseForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
+            user.courses.add(Course.objects.last())
             return redirect('course:list')  # replace 'courses' with the name of your courses listing page
+        else:
+            print(form.errors)
+            return render(request, 'course/add_course.html', {'form': form})
     else:
         form = CourseForm()
 
@@ -145,7 +148,7 @@ def view_lesson(request, course_id, lesson_id):
     contents = lesson.contents.all()
     contents_with_viewed_status = [(content, user in content.viewed_by.all()) for content in contents]
     total_contents = len(contents_with_viewed_status)
-    completed_contents = sum(viewed for content, viewed in contents_with_viewed_status)
+    completed_contents = sum(viewed for _, viewed in contents_with_viewed_status)
     progress = (completed_contents / total_contents) * 100 if total_contents else 0
     lessons_and_contents.append((lesson, contents_with_viewed_status, progress))
 

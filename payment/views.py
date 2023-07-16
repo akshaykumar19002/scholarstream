@@ -32,7 +32,7 @@ def checkout(request):
 @login_required(login_url='user:login')
 def complete_order(request):
     
-    if request.POST.get('action') == 'post':
+    if request.method == 'POST':
         name = request.POST.get('name')
         email = request.POST.get('email')
         address1 = request.POST.get('address1')
@@ -48,28 +48,31 @@ def complete_order(request):
         total_cost = cart.get_total_price()
 
         if request.user.user_type == 'S':
-            order = Order(full_name=name, email=email, shipping_address=shipping_address, amount_paid=total_cost, user=request.user)
-            order.save()
-            print(cart)
-            for item in cart:
-                print(item)
-                order_item = OrderItem(course=item['course'], price=item['price'], order=order, user=request.user)
-                order_item.save()
-                get_user_model().objects.get(pk=request.user.id).courses.add(item['course'])
-            
-            user = get_user_model(request.user.id)
-            mail_subject = 'Course purchase confirmation'
-            mail_body = render_to_string('payment/email-confirmation.html', {
-                'user': user.first_name,
-            })
-            user.email_user(mail_subject, mail_body)
-
-            return JsonResponse({
-                'isSuccess': True,
-                'message': 'Order completed successfully'
-            })
-
-    # return render(request, 'payment/complete-order.html')
+            try:
+                order = Order(full_name=name, email=email, shipping_address=shipping_address, amount_paid=total_cost, user=request.user)
+                order.save()
+                print(cart)
+                for item in cart:
+                    print(item)
+                    order_item = OrderItem(course=item['course'], price=item['price'], order=order, user=request.user)
+                    order_item.save()
+                    get_user_model().objects.get(pk=request.user.id).courses.add(item['course'])
+                
+                user = get_user_model().objects.get(id=request.user.id)
+                mail_subject = 'Course purchase confirmation'
+                mail_body = render_to_string('payment/payment_success_email.html', {
+                    'user': user,
+                })
+                user.email_user(mail_subject, mail_body)
+                cart.clear()
+                return JsonResponse({'status': 'success', 'message': 'Order placed successfully'})
+            except Exception as e:
+                print(e)
+                return JsonResponse({'status': 'error', 'message': 'Something went wrong'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'You are not a student'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Something went wrong'})
 
 
 @login_required(login_url='user:login')
