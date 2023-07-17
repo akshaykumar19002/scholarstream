@@ -37,6 +37,9 @@
             <th class="text-center">Title</th>
             <th class="text-center">Description</th>
             <th class="text-center">Attempts Allowed</th>
+            {% if user.is_authenticated and user.user_type == 'I' %}
+                <th class="text-center">Published</th>
+            {% endif %}
             <th class="text-center">Creation Date</th>
             <th class="text-center">Due Date</th>
         </tr>
@@ -47,6 +50,13 @@
                 <td class="text-center"><a href="{% url 'course:view_assignment' course_id=course.id assignment_id=assignment.id %}">{{ assignment.title }}</a></td>
                 <td class="text-center">{{ assignment.description }}</td>
                 <td class="text-center">{{ assignment.attemptsAllowed }}</td>
+                {% if user.is_authenticated and user.user_type == 'I' %}
+                    {% if assignment.is_published %}
+                        <td class="text-center"><span><i class="fa fa-check"></i></span></td>
+                    {% else %}
+                        <td class="text-center"><span><i class="fa fa-times"></i></span></td>
+                    {% endif %}
+                {% endif %}
                 <td class="text-center">{{ assignment.creation_date }}</td>
                 <td class="text-center">{{ assignment.due_date }}</td>
             </tr>

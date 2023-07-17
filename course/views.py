@@ -276,7 +276,10 @@ def create_assignment(request, course_id):
 @login_required(login_url='user:login')
 def list_assignments(request, course_id):
     course = get_object_or_404(Course, id=course_id)
-    assignments = Assignment.objects.filter(course=course)
+    if request.user.user_type == 'S':
+        assignments = Assignment.objects.filter(course=course, is_published=True)
+    else:
+        assignments = Assignment.objects.filter(course=course)
 
     context = {
         'course': course,
@@ -382,6 +385,26 @@ def view_assignment_submission(request, course_id, submission_id):
         'grade_form': GradeForm() if request.user.user_type == 'I' else None
     }
     return render(request, 'course/assignment/view_submission.html', context)
+
+
+@login_required(login_url='user:login')
+def publish_assignment(request, course_id, assignment_id):
+    if (request.user.user_type != 'I'):
+        return redirect('user:forbidden')
+    assignment = get_object_or_404(Assignment, id=assignment_id)
+    assignment.is_published = True
+    assignment.save()
+    return redirect('course:list_assignments', course_id=course_id)
+
+
+@login_required(login_url='user:login')
+def hide_assignment(request, course_id, assignment_id):
+    if (request.user.user_type != 'I'):
+        return redirect('user:forbidden')
+    assignment = get_object_or_404(Assignment, id=assignment_id)
+    assignment.is_published = False
+    assignment.save()
+    return redirect('course:list_assignments', course_id=course_id)
 
 
 @login_required(login_url='user:login')

@@ -25,6 +25,8 @@ urlpatterns = [
     path('<int:course_id>/assignment/<int:assignment_id>/', views.view_assignment, name='view_assignment'),
     path('<int:course_id>/assignment/<int:assignment_id>/delete/', views.delete_assignment, name='delete_assignment'),
     path('<int:course_id>/assignment/submission/<int:submission_id>/', views.view_assignment_submission, name='view_submission'),
+    path('<int:course_id>/assignment/<int:assignment_id>/publish/', views.publish_assignment, name='publish_assignment'),
+    path('<int:course_id>/assignment/<int:assignment_id>/unpublish/', views.hide_assignment, name='hide_assignment'),
     path('<int:course_id>/assignment/submission/<int:submission_id>/download', views.download_assignment_submission_content, name='download_submission_content'),
 
     path('<int:course_id>/list_quiz/', views.list_quizzes, name='list_quizzes'),

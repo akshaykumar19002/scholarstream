@@ -28,11 +28,11 @@ class PathAndRename(object):
 
     def __call__(self, instance, filename):
         ext = filename.split('.')[-1]
+        filename = filename.split('.')[0]
         if instance.pk:
-            filename = '{}.{}'.format(instance.pk, ext)
+            return filename
         else:
-            # set filename as random string if instance is not saved yet
-            filename = '{}.{}'.format(uuid.uuid4().hex, ext)
+            filename = '{}_{}.{}'.format(filename, uuid.uuid4().hex, ext)
         return os.path.join(self.path, filename)
 
 
@@ -111,6 +111,7 @@ class Assignment(models.Model):
     due_date = models.DateTimeField()
     creation_date = models.DateTimeField(auto_now_add=True)
     attemptsAllowed = models.PositiveIntegerField(default=1)
+    is_published = models.BooleanField(default=False)
 
 
 class AssignmentFile(models.Model):

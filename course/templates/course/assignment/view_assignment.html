@@ -11,12 +11,24 @@
         <div class="col-md-6">
             <h1>{{ assignment.title }}</h1>
             <p>{{ assignment.description }}</p>
+
+            <h5 style="text-decoration: underline;">Attachments</h5>
+            {% for file in assignment.files.all %}
+                <a href="{{ file.file.url }}">File{{ forloop.counter }}</a><br><br>
+            {% endfor %}
         </div>
-        <div class="col-md-1 offset-md-5">
             {% if user.is_authenticated and user.user_type == 'I' %}
-                <a href="{% url 'course:delete_assignment' course.id assignment.id %}" class="float-end btn btn-primary" >Delete</a>
+                <div class="offset-3 col-1">
+                    {% if assignment.is_published %}
+                        <a href="{% url 'course:hide_assignment' course.id assignment.id %}" class="btn btn-primary float-end">Hide Assignment</a>
+                    {% else %}
+                        <a href="{% url 'course:publish_assignment' course.id assignment.id %}" class="btn btn-primary float-end">Publish Assignment</a>
+                    {% endif %}
+                </div>
+                <div class="ms-3 col-1">
+                    <a href="{% url 'course:delete_assignment' course.id assignment.id %}" class="btn btn-primary float-end">Delete Assignment</a>
+                </div>
             {% endif %}
-        </div>
         <hr>
     </div>
 
