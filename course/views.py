@@ -322,7 +322,7 @@ def view_assignment(request, course_id, assignment_id):
                     SubmissionFile.objects.create(file=f, submission=submission)
 
                 AssignmentProgress.objects.update_or_create(assignment=assignment, student=user,
-                                                            defaults={'is_complete': False})
+                                                            defaults={'is_complete': True})
 
                 return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
             else:
@@ -651,7 +651,9 @@ def list_grades(request, course_id):
                     if assignmentProgress == None:
                         assignmentProgress = AssignmentProgress(assignment = assignment, student = student)
                     assignmentProgress.grade = assignment_grade_form.cleaned_data['grade']
-                    assignmentProgress.save()                    
+                    assignmentProgress.save()
+                else:
+                    print(assignment_grade_form.errors)                  
             elif 'quiz_grade_form' in request.POST:
                 quiz_grade_form = QuizGradeForm(request.POST)
                 student_id = request.POST.get('student_id')
@@ -664,6 +666,8 @@ def list_grades(request, course_id):
                         quizProgress = QuizProgress(quiz = quiz, student = student)
                     quizProgress.total_score = quiz_grade_form.cleaned_data['total_score']
                     quizProgress.save()
+                else:
+                    print(quiz_grade_form.errors)
                     
         assignments = {}
         quizzes = {}

@@ -23,6 +23,8 @@
                             Incomplete
                         {% endif %}
                     </p>
+                    {% empty %}
+                        <p>No lessons in this course.</p>
                     {% endfor %}
 
                     <h3>Assignments</h3>
@@ -34,6 +36,8 @@
                             Incomplete
                         {% endif %}
                     </p>
+                    {% empty %}
+                        <p>No assignments in this course.</p>
                     {% endfor %}
 
                     <h3>Quizzes</h3>
@@ -45,6 +49,8 @@
                             Incomplete
                         {% endif %}
                     </p>
+                    {% empty %}
+                        <p>No quizzes in this course.</p>
                     {% endfor %}
                 </div>
             </div>
