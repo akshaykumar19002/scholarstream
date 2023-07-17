@@ -17,6 +17,8 @@ urlpatterns = [
     path('<int:course_id>/lesson/<int:lesson_id>/', views.view_lesson, name='view_lesson'),
     path('<int:course_id>/lesson/<int:lesson_id>/add_content/', AddContent.as_view(), name='add_content'),
     path('content/<int:content_id>/', views.view_content, name='view_content'),
+    path('<int:course_id>/download_content', views.download_course_content, name='download_course_content'),
+    path('<int:course_id>/<int:lesson_id>/download_content', views.download_course_content, name='download_lesson_content'),
     
     path('<int:course_id>/create_assignment/', views.create_assignment, name='create_assignment'),
     path('<int:course_id>/assignments/', views.list_assignments, name='list_assignments'),

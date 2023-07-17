@@ -18,9 +18,19 @@ from datetime import datetime
 from django.utils import timezone
 
 import json
+import uuid
 import csv
 from wsgiref.util import FileWrapper
 import io
+import os
+import shutil
+import tempfile
+from zipfile import ZipFile
+
+from django.http import FileResponse
+from django.core.files import File
+
+import boto3
 
 
 @login_required(login_url='user:login')
@@ -718,6 +728,7 @@ def create_extra_grade(request, course_id):
     return render(request, 'course/grade/create_extra_grade.html', {'course': course, 'form': form})
 
 
+@login_required(login_url='user:login')
 def download_sample_file(request, course_id):
     User = get_user_model()
     response = HttpResponse(content_type='text/csv')
@@ -729,5 +740,61 @@ def download_sample_file(request, course_id):
     students = User.objects.filter(courses__id=course_id)
     for student in students:
         writer.writerow([student.id, ''])
+    return response
+
+
+@login_required(login_url='user:login')
+def download_course_content(request, course_id, lesson_id=None):
+    # Creating temporary directories
+    s3_client = boto3.client('s3')
+    bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
+    
+    course = get_object_or_404(Course, id=course_id)
+    lesson = get_object_or_404(Lesson, id=lesson_id) if lesson_id else None
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        if lesson:
+            lessons = [lesson]
+        else:
+            lessons = Lesson.objects.filter(course=course)
+        for lesson in lessons:  # Iterating over all lessons
+            lesson_dir = os.path.join(tmp_dir, lesson.title)
+            os.makedirs(lesson_dir)  # Creating directory for each lesson
+            
+            for content in lesson.contents.all():
+                if content.content_type == Content.TEXT:
+                    with open(os.path.join(lesson_dir, f'{content.title}.txt'), 'w') as f:
+                        f.write(content.text_content)
+                elif content.content_type in [Content.IMAGE, Content.PDF, Content.AUDIO, Content.VIDEO, Content.OTHER]:
+                    file_field = None
+                    if content.content_type == Content.IMAGE:
+                        file_field = content.image_content
+                    elif content.content_type == Content.PDF:
+                        file_field = content.pdf_content
+                    elif content.content_type == Content.AUDIO:
+                        file_field = content.audio_content
+                    elif content.content_type == Content.VIDEO:
+                        file_field = content.video_content
+                    elif content.content_type == Content.OTHER:
+                        file_field = content.other_content
+
+                    # Download the file from S3 to a temp file
+                    with tempfile.NamedTemporaryFile(suffix=os.path.splitext(file_field.name)[1], delete=True) as tmp_content:
+                        s3_client.download_file(bucket_name, file_field.name, tmp_content.name)
+                        # Copy the temp file to the lesson directory
+                        shutil.copy2(tmp_content.name, os.path.join(lesson_dir, content.title + os.path.splitext(file_field.name)[1]))
+
+        # Creating a zip file
+        tmp_file_path = os.path.join(tempfile.gettempdir(), f'tmp_{uuid.uuid4().hex}.zip')
+        with ZipFile(tmp_file_path, 'w') as zipf:
+            # Adding files from all lessons
+            for folderName, subfolders, filenames in os.walk(tmp_dir):
+                for filename in filenames:
+                    # create complete filepath of file in directory
+                    filePath = os.path.join(folderName, filename)
+                    # Add file to zip
+                    zipf.write(filePath, os.path.relpath(filePath, tmp_dir))
+
+        # Prepare response
+        response = FileResponse(open(tmp_file_path, 'rb'), as_attachment=True, filename='lessons.zip')
 
     return response

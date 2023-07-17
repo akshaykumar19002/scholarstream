@@ -1,6 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Pay using PayPal{% endblock %}
+
+
 {% block content %}
-    <h4>Subscribe using PayPal</h4>
+<style>
+
+    body {
+        background-color: gray;
+    }
+
+</style>
+<div class="text-center container-fluid col-6 bg-white shadow-md p-5 form-layout">
+    <h4>Subscribe using PayPal</h4><br>
     {{ form.render }}
+
+</div>
 {% endblock %}

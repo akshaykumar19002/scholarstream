@@ -31,9 +31,15 @@
             <div class="accordion" id="accordionLesson">
                 <div class="accordion-item">
                 <h2 class="accordion-header" id="{{lesson.id}}">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{lesson.id}}" aria-expanded="true" aria-controls="collapse{{lesson.id}}">
-                        {{lesson.title}}    
-                    </button>
+                    <div class="d-flex justify-content-between">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse{{ lesson.id }}" aria-expanded="true"
+                                aria-controls="collapse{{ lesson.id }}">
+                            {{ lesson.title }}
+                        </button>
+                        <a href="{% url 'course:download_lesson_content' course.id lesson.id %}"
+                            class="btn btn-primary m-2"><i class="fa fa-download"></i></a>
+                    </div>
                 </h2>
                 <div class="progress">
                     <div class="progress-bar" role="progressbar" style="width: {{progress}}%;" aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">{{progress}}%</div>
