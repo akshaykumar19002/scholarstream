@@ -1,95 +1,118 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <title>Scholar Stream</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
-</head>
-<body>
+{% extends 'course/dashboard/base_dashboard.html' %}
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        &nbsp;
-        <a class="navbar-brand" href="{% url 'course:list'%}">Scholar Stream</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNavDropdown">
-            <ul class="navbar-nav">
-                <li class="nav-item mr-auto">
-                    <a class="nav-link" href="{% url 'course:detail' pk=course.id%}">Course Home <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'course:detail' pk=course.id%}">Content</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'course:list_assignments' course_id=course.id%}">Assignments</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'course:list_quizzes' course_id=course.id%}">Quiz</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Grades</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'course:progress' course_id=course.id%}">Progress</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="btn btn-alert navbar-btn text-white" type="button"  href="{% url 'user:logout' %}"> <i class="fa fa-sign-out"></i> &nbsp; Logout </a>
-                </li>
-            </ul>
+{% block content %}
+
+<style>
+    a {
+        text-decoration: none;
+    }
+    .accordion-container {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+
+  <div class="container">
+    <div class="row">
+        <div class="col-2">
+            <img src="{{ course.thumbnail.url }}" class="" alt="{{ course.name }} thumbnail" style="width: 175px; height: 175px; object-fit: cover;">
         </div>
-    </nav>
-    <br>
+        <div class="col-5">
+            <h1 class="card-title">{{ course.name }}</h1>
+            <p class="card-text">{{ course.description }}</p>
+        </div>
+    </div>
 
-    <div id="lesson"></div>
+    <div class="accordion my-5" id="accordion1">
+        <!-- Assignments -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="assignmentsHeading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#assignmentsCollapse" aria-expanded="false" aria-controls="assignmentsCollapse">
+                    Assignments
+                </button>
+            </h2>
+            <div id="assignmentsCollapse" class="accordion-collapse collapse show" aria-labelledby="assignmentsHeading" data-bs-parent="#accordion1">
+                <div class="accordion-body accordion-container">
+                    <div class="row justify-content-center">
+                        {% for assignment in assignments %}
+                            <div class="col-md-4 m-2 p-3 card mb-2">
+                                <div class="card-body">
+                                <a href="{% url 'course:view_assignment' course.id assignment.id %}"><h3 class="card-title">{{ assignment.title }}</h3></a>
+                                <p class="card-text">{{ assignment.description }}</p>
+                                <p class="card-subtitle mb-2"><strong>Due date</strong>: {{ assignment.due_date }}</p>
+                                <p class="card-subtitle mb-2"><strong>Attempts allowed</strong>: {{ assignment.attemptsAllowed }}</p>
+                                <p class="card-subtitle mb-2"><strong>Created on</strong>: {{ assignment.creation_date }}</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                        <div class="alert alert-warning" role="alert">
+                            No assignments available for this course yet.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div id="view_content"></div>
+    <div class="accordion my-5" id="accordion2">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="quizzesHeading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#quizzesCollapse" aria-expanded="false" aria-controls="quizzesCollapse">
+                    Quizzes
+                </button>
+            </h2>
+            <div id="quizzesCollapse" class="accordion-collapse collapse show" aria-labelledby="quizzesHeading" data-bs-parent="#accordion2">
+                <div class="accordion-body accordion-container">
+                    <div class="row justify-content-center">
+                        {% for quiz in quizzes %}
+                            <div class="col-md-4 m-2 p-3 card mb-2">
+                                <div class="card-body">
+                                <h3 class="card-title">{{ quiz.name }}</h3>
+                                <p class="card-text">{{ quiz.description }}</p>
+                                <p class="card-subtitle mb-2"><strong>Due date</strong>: {{ quiz.due_date }}</p>
+                                <p class="card-subtitle mb-2"><strong>Attempts allowed</strong>: {{ quiz.attempts_allowed }}</p>
+                                <p class="card-subtitle mb-2"><strong>Created on</strong>: {{ quiz.creation_date }}</p>
+                                <p class="card-subtitle mb-2"><strong>Published</strong>: {{ quiz.is_published }}</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                        <div class="alert alert-warning" role="alert">
+                            No quizzes available for this course yet.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>       
 
-    <br>
+    <div class="accordion my-5" id="accordion3">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="lessonsHeading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#lessonsCollapse" aria-expanded="false" aria-controls="lessonsCollapse">
+                    Lessons
+                </button>
+            </h2>
+            <div id="lessonsCollapse" class="accordion-collapse collapse show" aria-labelledby="lessonsHeading" data-bs-parent="#accordion3">
+                <div class="accordion-body accordion-container">
+                    <div class="row justify-content-center">
+                        {% for lesson in lessons %}
+                            <div class="text-center col-md-2 m-2 p-3 card mb-2">
+                                <div class="card-body">
+                                <a href="{% url 'course:view_lesson' course.id lesson.id %}"><h3 class="card-title">{{ lesson.title }}</h3></a>
+                                </div>
+                            </div>
+                        {% empty %}
+                        <div class="alert alert-warning" role="alert">
+                            No lessons available for this course yet.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <style>
-        a {
-            text-decoration: none;
-            color: black;
-        }
-    </style>
-
-    <script>
-        
-        document.addEventListener("DOMContentLoaded", function() {
-
-            // load lessons
-            fetch(`{% url 'course:list_lessons' course_id=course.id %}`)
-                .then(response => response.text())
-                .then(text => {
-                    document.querySelector(`#lesson`).innerHTML = text;
-                    document.querySelectorAll('.content-link').forEach(link => {
-                        link.onclick = function(event) {
-                            event.preventDefault();
-                            let url = this.dataset.url;
-                            fetch(url)
-                            .then(response => response.text())
-                            .then(text => {
-                                document.querySelector(`#lesson`).innerHTML = '';
-                                document.querySelector(`#view_content`).innerHTML = text;
-                            });
-                        }
-                    });
-                });
-        });
-
-    </script>
-
-</body>
-</html>
+  </div>
+{% endblock %}

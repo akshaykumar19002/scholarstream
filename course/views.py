@@ -60,8 +60,16 @@ def list_course(request):
 @login_required(login_url='user:login')
 def course_dashboard(request, pk):
     course = get_object_or_404(Course, pk=pk)
-    # return render(request, 'course/dashboard/dashboard.html', {'course': course})
-    return redirect('course:list_lessons', course_id=course.id)
+    assignments = Assignment.objects.filter(course=course)
+    quizzes = Quiz.objects.filter(course=course)
+    lessons = Lesson.objects.filter(course=course)
+    context = {
+        'course': course,
+        'assignments': assignments,
+        'quizzes': quizzes,
+        'lessons': lessons
+    }
+    return render(request, 'course/dashboard/dashboard.html', context)
 
 
 @login_required(login_url='user:login')
