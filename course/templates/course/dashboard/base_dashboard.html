@@ -19,7 +19,11 @@
 		<a class="nav-link" href="{% url 'course:grades' course.id %}">Grades</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link" href="{% url 'course:progress' course_id=course.id%}">Progress</a>
+		{% if user.is_authenticated and user.user_type == 'I' %}
+			<a class="nav-link" href="{% url 'course:list_students' course.id%}">Progress</a>
+		{% else %}
+			<a class="nav-link" href="{% url 'course:progress' course_id=course.id%}">Progress</a>
+		{% endif %}
 	</li>
 	<li class="nav-item">
 		<a class="nav-link" href="{% url 'feedback:review' course_id=course.id%}">Review</a>

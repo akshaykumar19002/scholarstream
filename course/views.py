@@ -607,7 +607,11 @@ def view_attempts(request, course_id, quiz_id):
 def view_course_progress(request, course_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     course = get_object_or_404(Course, id=course_id)
-    
+    course_progress = get_user_course_progress(course, user)
+    return render(request, 'course/user_course_progress.html', course_progress)
+
+
+def get_user_course_progress(course, user):
     lessons = course.lessons.all()
     for lesson in lessons:
         progress = LessonProgress.objects.filter(lesson=lesson, student=user)
@@ -632,15 +636,12 @@ def view_course_progress(request, course_id):
         else:
             quiz.progress = progress[0]
     
-    course_progress = {
+    return {
         'course': course,
         'lessons': lessons,
         'assignments': assignments,
         'quizzes': quizzes,
     }
-
-    return render(request, 'course/user_course_progress.html', course_progress)
-
 
 def course_search(request, search_keyword):
     if request.user.is_authenticated:
@@ -821,3 +822,61 @@ def download_course_content(request, course_id, lesson_id=None):
         response = FileResponse(open(tmp_file_path, 'rb'), as_attachment=True, filename='lessons.zip')
 
     return response
+
+
+@login_required(login_url='user:login')
+def list_students(request, course_id):
+    user = get_object_or_404(get_user_model(), id=request.user.id)
+    course = get_object_or_404(Course, id=course_id)
+    if user.user_type != 'I':
+        return redirect('user:forbidden')
+    students = get_user_model().objects.filter(courses__id=course_id, user_type='S')
+    return render(request, 'course/course_progress_instructor/list_students.html', {'students': students, 'course': course})
+
+
+@login_required(login_url='user:login')
+def view_user_grades(request, course_id, user_id):
+    course = get_object_or_404(Course, id=course_id)
+    logged_in_user = get_object_or_404(get_user_model(), id=request.user.id)
+    student = get_object_or_404(get_user_model(), id=user_id)
+    if logged_in_user.user_type != 'I':
+        return redirect('user:forbidden')
+    context = get_user_grades_for_instructor(course, student)
+    return render(request, 'course/course_progress_instructor/view_user_grades.html', context)
+    
+
+
+@login_required(login_url='user:login')
+def view_user_progress(request, course_id, user_id):
+    logged_in_user = get_object_or_404(get_user_model(), id=request.user.id)
+    course = get_object_or_404(Course, id=course_id)
+    student = get_object_or_404(get_user_model(), id=user_id)
+    if logged_in_user.user_type != 'I':
+        return redirect('user:forbidden')
+    context = get_user_course_progress(course, student)
+    context['student'] = student
+    return render(request, 'course/course_progress_instructor/view_user_progress.html', context)
+
+
+def get_user_grades_for_instructor(course, user):       
+    assignments = {}
+    quizzes = {}
+    otherGrades = {}
+    for assignment in Assignment.objects.filter(course = course):
+        assignments[assignment] = AssignmentProgress.objects.filter(assignment = assignment, student=user)
+    for quiz in Quiz.objects.filter(course = course):
+        quizzes[quiz] = QuizProgress.objects.filter(quiz = quiz, student=user)
+        
+    oGrades = OtherGrade.objects.filter(course = course, student=user)
+    for otherGrade in oGrades:
+        otherGrades[otherGrade] = OtherGrade.objects.filter(name=otherGrade.name, course = course, student=user)
+        
+    return {
+        'course': course,
+        'student': user,
+        'assignments': assignments,
+        'quizzes': quizzes,
+        'otherGrades': otherGrades,
+        'assignment_grade_form': AssignmentGradeForm(),
+        'quiz_grade_form': QuizGradeForm(),
+    }

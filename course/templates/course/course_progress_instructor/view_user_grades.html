@@ -1,0 +1,109 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 15px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-4">
+            <h3> {{ student.get_full_name }}'s Grades </h3>
+        </div>
+    </div>
+    <br>
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Due Date</th>
+            <th>Submission Date</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for assignment, progress in assignments.items %}
+            <tr>
+                <td>Assignment</td>
+                <td>{{ assignment.title }}</a></td>
+                <td>{{ assignment.description }}</td>
+                <td>{{ assignment.due_date }}</td>
+                {% if progress.submission.submission_date %}
+                    <td>{{ progress.submission.submission_date }}</td>
+                {% else %}
+                    <td>Not submitted</td>
+                {% endif %}
+                {% if progress.grade %}
+                    <td>{{ progress.grade }}</td>
+                {% else %}
+                    <td>Not evaluated</td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No assignment evaluations done so far. </td>
+            </tr>
+        {% endfor %}
+        {% for quiz, progress in quizzes.items %}
+            <tr>
+                <td>Quiz</td>
+                <td>{{ quiz.name }}</a></td>
+                <td>{{ quiz.description }}</td>
+                <td>{{ quiz.due_date }}</td>
+                {% if progress.created_at %}
+                    <td>{{ progress.created_at }}</td>
+                {% else %}
+                    <td>Not submitted</td>
+                {% endif %}
+                {% if progress.total_score and progress.total_score != -1 %}
+                    <td>{{ progress.total_score }}</td>
+                {% else %}
+                    <td>Not evaluated</td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No quiz evaluations done so far. </td>
+            </tr>
+        {% endfor %}
+        {% for otherGrade in otherGrades %}
+            <tr>
+                <td>Extra</td>
+                <td>{{ otherGrade.name }}</a></td>
+                <td>{{ otherGrade.description }}</td>
+                <td> - </td>
+                <td>{{ otherGrade.created_at }}</td>
+                {% if otherGrade.grade %}
+                    <td>{{ otherGrade.grade }}</td>
+                {% else %}
+                    <td>Not evaluated</td>
+                {% endif %}
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No extra evaluations done so far. </td>
+            </tr>
+        {% endfor %}
+
+    </tbody>
+</table>
+
+
+</div>
+{% endblock content %}

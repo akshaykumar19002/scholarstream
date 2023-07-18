@@ -1,0 +1,64 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 15px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+
+<div class="container-fluid">
+    
+    <div class="row">
+        <div class="col-4">
+            <h3> Students </h3>
+        </div>
+        {% if user.is_authenticated and user.user_type == 'I' %}
+        <div class="col">
+            <a href="" class="btn btn-primary float-end">Add Students</a>
+        </div>
+        {% endif %}
+    </div>
+    <br>
+<table>
+    <thead>
+        <tr>
+            <th class="text-center">S. Id</th>
+            <th class="text-center">Student Name</th>
+            <th class="text-center">Email</th>
+            <th class="text-center">Progress</th>
+            <th class="text-center">Grades</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+            <tr>
+                <td class="text-center"> {{ student.id }} </td>
+                <td class="text-center">{{ student.get_full_name }}</td>
+                <td class="text-center">{{ student.email }}</td>
+                <td class="text-center"><a href="{% url 'course:view_user_progress' course.id student.id %}">View</a></td>
+                <td class="text-center"><a href="{% url 'course:view_user_grades' course.id student.id %}">View</a></td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td  class="text-center" colspan="5">No students enrolled.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+</div>
+{% endblock content %}

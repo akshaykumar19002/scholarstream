@@ -45,4 +45,8 @@ urlpatterns = [
     
     path('search/<str:search_keyword>', views.course_search, name='course_search'),
     
+    path('<int:course_id>/list_students/', views.list_students, name='list_students'),
+    path('<int:course_id>/view_user_grades/<int:user_id>/', views.view_user_grades, name='view_user_grades'),
+    path('<int:course_id>/view_user_progress/<int:user_id>/', views.view_user_progress, name='view_user_progress'),
+    
 ]
