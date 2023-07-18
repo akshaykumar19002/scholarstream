@@ -157,12 +157,6 @@ class AssignmentFileForm(forms.Form):
     file_field = MultipleFileField(required=False)
 
 
-class GradeForm(forms.ModelForm):
-    class Meta:
-        model = AssignmentSubmission
-        fields = ['grade']
-
-
 class AssignmentSubmissionForm(forms.ModelForm):
     class Meta:
         model = AssignmentSubmission
@@ -208,6 +202,10 @@ class AssignmentGradeForm(forms.ModelForm):
     class Meta:
         model = AssignmentProgress
         fields = ['grade']
+        
+        labels = {
+            'grade': '',
+        }
     
     
 class QuizGradeForm(forms.ModelForm):

@@ -306,21 +306,25 @@ def view_assignment(request, course_id, assignment_id):
     assignment = get_object_or_404(Assignment, id=assignment_id)
 
     if request.user.user_type == 'S':
-        submissions = AssignmentSubmission.objects.filter(assignment=assignment, student=user)
+        all_submissions = AssignmentSubmission.objects.filter(assignment=assignment, student=user)
     else:
-        submissions = AssignmentSubmission.objects.filter(assignment=assignment)
+        all_submissions = AssignmentSubmission.objects.filter(assignment=assignment)
+    submissions = {}
+    for submission in all_submissions:
+        progress = AssignmentProgress.objects.filter(submission=submission)
+        if len(progress) > 0:
+            submissions[submission] = progress[0]
+        else:
+            submissions[submission] = None
 
     if request.method == 'POST':
         if request.user.user_type == 'I':
-            grade_form = GradeForm(request.POST)
+            grade_form = AssignmentGradeForm(request.POST)
             if grade_form.is_valid():
-                submission_id = request.POST.get('submission_id')
-                submission = AssignmentSubmission.objects.get(id=submission_id)
-                submission.grade = grade_form.cleaned_data['grade']
-                submission.grader = request.user
-                submission.save()
-
+                evaluate_assignment(request, grade_form.cleaned_data['grade'])
                 return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
+            else:
+                print(grade_form.errors)
         else:
             form = AssignmentSubmissionForm(request.POST)
             file_form = SubmissionFileForm(request.POST, request.FILES)
@@ -334,9 +338,6 @@ def view_assignment(request, course_id, assignment_id):
                 for f in request.FILES.getlist('file_field'):
                     SubmissionFile.objects.create(file=f, submission=submission)
 
-                AssignmentProgress.objects.update_or_create(assignment=assignment, student=user,
-                                                            defaults={'is_complete': True})
-
                 return redirect('course:view_assignment', course_id=course.id, assignment_id=assignment.id)
             else:
                 context = {
@@ -346,7 +347,7 @@ def view_assignment(request, course_id, assignment_id):
                     'assignment': assignment,
                     'submissions': submissions,
                     'current_time': timezone.now(),
-                    'grade_form': GradeForm() if request.user.user_type == 'I' else None
+                    'grade_form': AssignmentGradeForm() if request.user.user_type == 'I' else None
                 }
                 return render(request, 'course/assignment/view_assignment.html', context)
     else:
@@ -360,10 +361,24 @@ def view_assignment(request, course_id, assignment_id):
         'assignment': assignment,
         'submissions': submissions,
         'current_time': timezone.now(),
-        'grade_form': GradeForm() if request.user.user_type == 'I' else None
+        'grade_form': AssignmentGradeForm() if request.user.user_type == 'I' else None
     }
     return render(request, 'course/assignment/view_assignment.html', context)
 
+def evaluate_assignment(request, grade):
+    submission_id = request.POST.get('submission_id')
+    student_id = request.POST.get('student_id')
+    student = get_object_or_404(get_user_model(), id=student_id)
+    submission = AssignmentSubmission.objects.get(id=submission_id)
+    submission.status = 'EVALUATED'
+    submission.save()
+    assignmentProgress = AssignmentProgress.objects.filter(assignment=submission.assignment, student=student).first()
+    if assignmentProgress == None:
+        assignmentProgress = AssignmentProgress(assignment=submission.assignment, student=student)
+    assignmentProgress.grade = grade
+    assignmentProgress.submission = submission
+    assignmentProgress.is_complete = True
+    assignmentProgress.save()
 
 @login_required(login_url='user:login')
 def view_assignment_submission(request, course_id, submission_id):
@@ -371,18 +386,14 @@ def view_assignment_submission(request, course_id, submission_id):
     course = get_object_or_404(Course, id=course_id)
     if request.method == 'POST':
         if request.user.user_type == 'I':
-            grade_form = GradeForm(request.POST)
+            grade_form = AssignmentGradeForm(request.POST)
             if grade_form.is_valid():
-                submission_id = request.POST.get('submission_id')
-                submission = AssignmentSubmission.objects.get(id=submission_id)
-                submission.grade = grade_form.cleaned_data['grade']
-                submission.grader = request.user
-                submission.save()
+                evaluate_assignment(request, grade_form.cleaned_data['grade'])
                 return redirect('course:view_submission', course_id=course.id, submission_id=submission.id)
     context = {
         'course': course,
         'submission': submission,
-        'grade_form': GradeForm() if request.user.user_type == 'I' else None
+        'grade_form': AssignmentGradeForm() if request.user.user_type == 'I' else None
     }
     return render(request, 'course/assignment/view_submission.html', context)
 
@@ -662,7 +673,12 @@ def list_grades(request, course_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     
     if user.user_type == 'S':
-        assignments = AssignmentProgress.objects.filter(assignment__course=course, student=user)
+        all_assignments = Assignment.objects.filter(course=course, progress__student=user)
+        assignments = {}
+        for assignment in all_assignments:
+            progress = AssignmentProgress.objects.filter(assignment=assignment, student=user)
+            if len(progress) > 0:
+                assignments[assignment] = progress[0]
         quizzes = QuizProgress.objects.filter(quiz__course=course, student=user)
         otherGrades = OtherGrade.objects.filter(course=course, student=user)
         context = {
@@ -673,22 +689,8 @@ def list_grades(request, course_id):
         }
         return render(request, 'course/grade/list_grades_student.html', context)
     else:
-        if request.method == 'POST':
-            if 'assignment_grade_form' in request.POST:
-                assignment_grade_form = AssignmentGradeForm(request.POST)
-                student_id = request.POST.get('student_id')
-                assignment_id = request.POST.get('assignment_id')
-                student = get_object_or_404(get_user_model(), id=student_id)
-                assignment = get_object_or_404(Assignment, id=assignment_id)
-                if assignment_grade_form.is_valid():
-                    assignmentProgress = AssignmentProgress.objects.filter(assignment = assignment).first()
-                    if assignmentProgress == None:
-                        assignmentProgress = AssignmentProgress(assignment = assignment, student = student)
-                    assignmentProgress.grade = assignment_grade_form.cleaned_data['grade']
-                    assignmentProgress.save()
-                else:
-                    print(assignment_grade_form.errors)                  
-            elif 'quiz_grade_form' in request.POST:
+        if request.method == 'POST':            
+            if 'quiz_grade_form' in request.POST:
                 quiz_grade_form = QuizGradeForm(request.POST)
                 student_id = request.POST.get('student_id')
                 quiz_id = request.POST.get('quiz_id')
@@ -702,12 +704,10 @@ def list_grades(request, course_id):
                     quizProgress.save()
                 else:
                     print(quiz_grade_form.errors)
-                    
-        assignments = {}
+
         quizzes = {}
         otherGrades = {}
-        for assignment in Assignment.objects.filter(course = course):
-            assignments[assignment] = AssignmentProgress.objects.filter(assignment = assignment)
+        assignments = Assignment.objects.filter(course = course)
         for quiz in Quiz.objects.filter(course = course):
             quizzes[quiz] = QuizProgress.objects.filter(quiz = quiz)
             
@@ -863,9 +863,9 @@ def get_user_grades_for_instructor(course, user):
     quizzes = {}
     otherGrades = {}
     for assignment in Assignment.objects.filter(course = course):
-        assignments[assignment] = AssignmentProgress.objects.filter(assignment = assignment, student=user)
+        assignments[assignment] = AssignmentProgress.objects.filter(assignment = assignment, student=user).first()
     for quiz in Quiz.objects.filter(course = course):
-        quizzes[quiz] = QuizProgress.objects.filter(quiz = quiz, student=user)
+        quizzes[quiz] = QuizProgress.objects.filter(quiz = quiz, student=user).first()
         
     oGrades = OtherGrade.objects.filter(course = course, student=user)
     for otherGrade in oGrades:

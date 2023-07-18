@@ -131,9 +131,6 @@ class AssignmentSubmission(models.Model):
         ('EVALUATED', 'Evaluated'),
     )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='SUBMITTED')
-    grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    grader = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='graded_submissions', on_delete=models.SET_NULL,
-                               null=True, blank=True)
 
     class Meta:
         ordering = ['-submission_date']
@@ -202,10 +199,11 @@ class QuizProgress(models.Model):
 
 
 class AssignmentProgress(models.Model):
-    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    assignment = models.ForeignKey(Assignment, related_name='progress', on_delete=models.CASCADE)
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     is_complete = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    submission = models.ForeignKey(AssignmentSubmission, related_name='progress', on_delete=models.CASCADE)
     grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     class Meta:

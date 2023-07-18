@@ -31,35 +31,27 @@
         <tr>
             <th>Type</th>
             <th>Title</th>
-            <th>Description</th>
             <th>Due Date</th>
-            <th>Submission Date</th>
+            <th>Evaluation Date</th>
             <th>Grade</th>
         </tr>
     </thead>
     <tbody>
-        {% for assignment in assignments %}
+        {% for assignment, progress in assignments.items %}
             <tr>
-                <td>Assignment</td>
-                <td>{{ assignment.assignment.title }}</a></td>
-                <td>{{ assignment.assignment.description }}</td>
-                <td>{{ assignment.assignment.due_date }}</td>
-                <td>{{ assignment.created_at }}</td>
-                {% if assignment.grade %}
-                    <td>{{ assignment.grade }}</td>
-                {% else %}
-                    <td>Not evaluated</td>
-                {% endif %}
+                <td>Assignment
+                <td>{{ assignment.title }}</td>
+                <td>{{ assignment.due_date }}</td>
+                <td>{{ progress.created_at }}</td>
+                <td>{{ progress.grade }}</td>
             </tr>
         {% empty %}
-            <tr>
-                <td colspan="6" class="text-center">No assignment evaluations done so far. </td>
-            </tr>
+            <td class="text-center" colspan="6">No assignment evaluations done so far</td>
         {% endfor %}
         {% for quiz in quizzes %}
             <tr>
                 <td>Quiz</td>
-                <td>{{ quiz.quiz.name }}</a></td>
+                <td>{{ quiz.quiz.name }}</td>
                 <td>{{ quiz.quiz.description }}</td>
                 <td>{{ quiz.quiz.due_date }}</td>
                 <td>{{ quiz.created_at }}</td>
@@ -71,13 +63,13 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="6" class="text-center">No quiz evaluations done so far. </td>
+                <td colspan="6" class="text-center">No quiz attempts done so far. </td>
             </tr>
         {% endfor %}
         {% for otherGrade in otherGrades %}
             <tr>
                 <td>Extra</td>
-                <td>{{ otherGrade.name }}</a></td>
+                <td>{{ otherGrade.name }}</td>
                 <td>{{ otherGrade.description }}</td>
                 <td> - </td>
                 <td>{{ otherGrade.created_at }}</td>

@@ -34,6 +34,7 @@
                 {% csrf_token %}
                 {{ grade_form }}
                 <input type="hidden" name="submission_id" value="{{ submission.id }}">
+                <input type="hidden" name="student_id" value="{{ submission.student.id }}">
                 <button class="btn btn-primary" type="submit"><i class="fa fa-check"></i></button>
             </form>
         {% endif %}

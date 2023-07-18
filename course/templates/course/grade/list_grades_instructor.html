@@ -32,7 +32,7 @@
     </div>
     <br>
     
-    {% for assignment, students  in assignments.items %}
+    {% for assignment  in assignments %}
         <h4> {{ assignment.title }} </h4>
         <table>
             <thead>
@@ -46,35 +46,18 @@
                 </tr>
             </thead>
             <tbody>
-                {% for student  in students %}
-                    <tr>
-                        <td>Assignment</td>
-                        <td>{{ student.student }}</a></td>
-                        <td>{{ student.assignment.title }}</td>
-                        <td>{{ student.assignment.due_date }}</td>
-                        <td>{{ student.created_at }}</td>
-                        {% if student.grade %}
-                            <td>{{ student.grade }}</td>
-                        {% else %}
-                            <td>
-                                <form method='post'>
-                                    {% csrf_token %}
-                                    {{ assignment_grade_form | crispy }}
-                                    <input type="hidden" name="student_id" value="{{ student.id }}">
-                                    <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
-                                    <button class="btn btn-primary" type="submit" name="assignment_grade_form">
-                                        <i class="fa fa-paper-plane-o"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        {% endif %}
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="6">No assignment evaluations done so far. </td>
-                    </tr>
-                {% endfor %}
-
+                <tr>
+                    {% for progress in assignment.progress.all %}
+                        <td>Assignment
+                        <td>{{ progress.student.get_full_name }}</td>
+                        <td>{{ assignment.title }}</td>
+                        <td>{{ assignment.due_date }}</td>
+                        <td>{{ progress.created_at }}</td>
+                        <td>{{ progress.grade }}</td>
+                    {% empty %}
+                        <td colspan="6">No evaluations done so far</td>
+                    {% endfor %}
+                </tr>
             </tbody>
         </table>
         <br><br>
@@ -97,7 +80,7 @@
                 {% for student  in students %}
                     <tr>
                         <td>Quiz</td>
-                        <td>{{ student.student }}</a></td>
+                        <td>{{ student.student }}</td>
                         <td>{{ student.quiz.name }}</td>
                         <td>{{ student.quiz.due_date }}</td>
                         <td>{{ student.created_at }}</td>
@@ -145,7 +128,7 @@
                 {% for student  in students %}
                     <tr>
                         <td>Extra</td>
-                        <td>{{ student.student }}</a></td>
+                        <td>{{ student.student }}</td>
                         <td>{{ student.name }}</td>
                         <td>-</td>
                         <td>{{ student.created_at }}</td>
