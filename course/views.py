@@ -635,9 +635,9 @@ def get_user_course_progress(course, user):
     for assignment in assignments:
         progress = AssignmentProgress.objects.filter(assignment=assignment, student=user)
         if len(progress) == 0:
-            assignment.progress = None
+            assignment.prog = None
         else:
-            assignment.progress = progress[0]
+            assignment.prog = progress[0]
     
     quizzes = course.quizzes.all()
     for quiz in quizzes:

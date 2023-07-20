@@ -94,7 +94,6 @@ def payment_failed(request):
 def subscription(request):
     user = get_user_model().objects.get(pk=request.user.id)
     if request.method == 'POST':
-        f = SubscriptionForm(request.POST)
         subscription_plan = request.POST.get('subscription_type')
     
         request.session['subscription_plan'] = subscription_plan
