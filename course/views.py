@@ -6,16 +6,15 @@ from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.db.models import Q
+from django.views import View
+from django.db import models, transaction
+from django.http import FileResponse
+from datetime import datetime
+from django.utils import timezone
 
 from .forms import *
 from .models import *
 from cart.cart import Cart
-
-from django.views import View
-from django.db import models, transaction
-
-from datetime import datetime
-from django.utils import timezone
 
 import json
 import uuid
@@ -26,14 +25,10 @@ import os
 import shutil
 import tempfile
 from zipfile import ZipFile
-
-from django.http import FileResponse
-from django.core.files import File
-
 import boto3
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def add_course(request):
     user = get_object_or_404(get_user_model(), pk=request.user.pk)
     if user.user_type != 'I':
@@ -67,12 +62,16 @@ def list_course(request):
         return render(request, 'course/list_course.html', {'allcourses': allcourses})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def course_dashboard(request, pk):
     course = get_object_or_404(Course, pk=pk)
-    assignments = Assignment.objects.filter(course=course)
-    quizzes = Quiz.objects.filter(course=course)
     lessons = Lesson.objects.filter(course=course)
+    if request.user.user_type == 'S':
+        assignments = Assignment.objects.filter(course=course, is_published=True)
+        quizzes = Quiz.objects.filter(course=course, is_published=True)
+    else:
+        assignments = Assignment.objects.filter(course=course)
+        quizzes = Quiz.objects.filter(course=course)
     context = {
         'course': course,
         'assignments': assignments,
@@ -82,7 +81,7 @@ def course_dashboard(request, pk):
     return render(request, 'course/dashboard/dashboard.html', context)
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def enroll_course(request, pk):
     if request.user.user_type == 'S':
         course = get_object_or_404(Course, pk=pk)
@@ -92,7 +91,7 @@ def enroll_course(request, pk):
     return redirect('course:list')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def dropout(request, pk):
     if request.user.user_type == 'S':
         course = get_object_or_404(Course, pk=pk)
@@ -102,20 +101,20 @@ def dropout(request, pk):
     return redirect('course:list')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def delete_course(request, pk):
     if request.user.user_type == 'I':
         course = get_object_or_404(Course, pk=pk)
         course.delete()
         return redirect('course:list')
-    return redirect('user:forbidden')
+    return redirect('forbidden')
 
 class AddLesson(LoginRequiredMixin, View):
     
     def get(self, request, course_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
-            return redirect('user:forbidden')
+            return redirect('forbidden')
         course = get_object_or_404(Course, id=course_id)
         form = LessonForm()
         return render(request, 'course/lesson/add_lesson.html', {'form': form, 'course': course})
@@ -123,7 +122,7 @@ class AddLesson(LoginRequiredMixin, View):
     def post(self, request, course_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
-            return redirect('user:forbidden')
+            return redirect('forbidden')
         course = get_object_or_404(Course, id=course_id)
         form = LessonForm(request.POST)
         if form.is_valid():
@@ -134,7 +133,7 @@ class AddLesson(LoginRequiredMixin, View):
             return render(request, 'course/lesson/add_lesson.html', {'form': form, 'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def list_lessons(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
     lessons = course.lessons.prefetch_related('contents__viewed_by').all()
@@ -158,7 +157,7 @@ def list_lessons(request, course_id):
     return render(request, 'course/lesson/list_lessons.html', context)
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_lesson(request, course_id, lesson_id):
     course = get_object_or_404(Course, pk=course_id)
     lesson = Lesson.objects.prefetch_related('contents__viewed_by').get(pk=lesson_id)
@@ -189,7 +188,7 @@ class AddContent(LoginRequiredMixin, View):
     def get(self, request, course_id, lesson_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
-            return redirect('user:forbidden')
+            return redirect('forbidden')
         form = ContentForm()
         course = get_object_or_404(Course, id=course_id)
         return render(request, 'course/content/add_content.html', {'form': form, 'course': course})
@@ -197,7 +196,7 @@ class AddContent(LoginRequiredMixin, View):
     def post(self, request, course_id, lesson_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
-            return redirect('user:forbidden')
+            return redirect('forbidden')
         course = get_object_or_404(Course, id=course_id)
         lesson = get_object_or_404(Lesson, id=lesson_id)
         form = ContentForm(request.POST, request.FILES)
@@ -215,7 +214,7 @@ class AddContent(LoginRequiredMixin, View):
             return render(request, 'course/content/add_content.html', {'form': form, 'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_content(request, content_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     content = get_object_or_404(Content, id=content_id)
@@ -242,11 +241,11 @@ def update_progress(student, lesson):
         progress.save()
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def create_assignment(request, course_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     if user.user_type != 'I':
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     
     course = get_object_or_404(Course, id=course_id)
 
@@ -273,7 +272,7 @@ def create_assignment(request, course_id):
     return render(request, 'course/assignment/add_assignment.html', {'form': form, 'file_form': file_form, 'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def list_assignments(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     if request.user.user_type == 'S':
@@ -289,16 +288,16 @@ def list_assignments(request, course_id):
 
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def delete_assignment(request, course_id, assignment_id):
     if request.user.user_type == 'I':
         assignment = get_object_or_404(Assignment, id=assignment_id)
         assignment.delete()
         return redirect('course:list_assignments', course_id=course_id)
-    return redirect('user:forbidden')
+    return redirect('forbidden')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_assignment(request, course_id, assignment_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
 
@@ -380,7 +379,7 @@ def evaluate_assignment(request, grade):
     assignmentProgress.is_complete = True
     assignmentProgress.save()
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_assignment_submission(request, course_id, submission_id):
     submission = get_object_or_404(AssignmentSubmission, id=submission_id)
     course = get_object_or_404(Course, id=course_id)
@@ -398,27 +397,27 @@ def view_assignment_submission(request, course_id, submission_id):
     return render(request, 'course/assignment/view_submission.html', context)
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def publish_assignment(request, course_id, assignment_id):
     if (request.user.user_type != 'I'):
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     assignment = get_object_or_404(Assignment, id=assignment_id)
     assignment.is_published = True
     assignment.save()
     return redirect('course:list_assignments', course_id=course_id)
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def hide_assignment(request, course_id, assignment_id):
     if (request.user.user_type != 'I'):
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     assignment = get_object_or_404(Assignment, id=assignment_id)
     assignment.is_published = False
     assignment.save()
     return redirect('course:list_assignments', course_id=course_id)
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def download_assignment_submission_content(request, course_id, submission_id):
     submission = get_object_or_404(AssignmentSubmission, id=submission_id)
     filename = 'assignment_' + str(submission.assignment.id) + '_' + str(submission.id) + '_' + str(submission.student.id) + '_' + submission.student.first_name + '.txt'
@@ -429,7 +428,7 @@ def download_assignment_submission_content(request, course_id, submission_id):
     return response
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def list_quizzes(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     if (request.user.user_type != 'I'):
@@ -439,10 +438,10 @@ def list_quizzes(request, course_id):
     return render(request, 'course/quiz/list_quizzes.html', {'course': course, 'quizzes': quizzes})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def add_quiz(request, course_id):
     if (request.user.user_type != 'I'):
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     course = get_object_or_404(Course, id=course_id)
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     if request.method == 'POST':
@@ -476,44 +475,44 @@ def add_quiz(request, course_id):
         return render(request, 'course/quiz/add_quiz.html', {'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_quiz(request, course_id, quiz_id):
     if (request.user.user_type != 'I'):
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     course = get_object_or_404(Course, id=course_id)
     quiz = get_object_or_404(Quiz, course__id=course_id, id=quiz_id)
     questions = Question.objects.filter(quiz=quiz)
     return render(request, 'course/quiz/view_quiz.html', {'quiz': quiz, 'questions': questions, 'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def delete_quiz(request, course_id, quiz_id):
     if (request.user.user_type != 'I'):
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     quiz = get_object_or_404(Quiz, id=quiz_id)
     quiz.delete()
     return redirect('course:list_quizzes', course_id=course_id)
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def publish_quiz(request, course_id, quiz_id):
     if (request.user.user_type != 'I'):
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     quiz = get_object_or_404(Quiz, id=quiz_id)
     quiz.is_published = True
     quiz.save()
     return redirect('course:list_quizzes', course_id=course_id)
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def hide_quiz(request, course_id, quiz_id):
     if (request.user.user_type != 'I'):
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     quiz = get_object_or_404(Quiz, id=quiz_id)
     quiz.is_published = False
     quiz.save()
     return redirect('course:list_quizzes', course_id=course_id)
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def attempt_quiz(request, course_id, quiz_id):
     course = get_object_or_404(Course, id=course_id)
     user = get_object_or_404(get_user_model(), id=request.user.pk)
@@ -521,7 +520,7 @@ def attempt_quiz(request, course_id, quiz_id):
     questions = quiz.questions.all()
 
     if user.user_type != 'S':
-        return redirect('user:forbidden')
+        return redirect('forbidden')
 
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -601,12 +600,12 @@ def attempt_quiz(request, course_id, quiz_id):
         return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_attempts(request, course_id, quiz_id):
     course = get_object_or_404(Course, id=course_id)
     student = get_object_or_404(get_user_model(), id=request.user.pk)
     if student.user_type != 'S':
-        return redirect('user:forbidden')
+        return redirect('forbidden')
 
     quiz = get_object_or_404(Quiz, course__id=course_id, id=quiz_id)
     attempts = QuizProgress.objects.filter(student=student, quiz=quiz)
@@ -614,7 +613,7 @@ def view_attempts(request, course_id, quiz_id):
     return render(request, 'course/quiz/view_attempts.html', {'quiz': quiz, 'attempts': attempts, 'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_course_progress(request, course_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     course = get_object_or_404(Course, id=course_id)
@@ -667,7 +666,7 @@ def course_search(request, search_keyword):
     return render(request, 'course/list_course.html', {'allcourses': allcourses})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def list_grades(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     user = get_object_or_404(get_user_model(), id=request.user.pk)
@@ -726,7 +725,7 @@ def list_grades(request, course_id):
         return render(request, 'course/grade/list_grades_instructor.html', context)
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def create_extra_grade(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     User = get_user_model()
@@ -752,7 +751,7 @@ def create_extra_grade(request, course_id):
     return render(request, 'course/grade/create_extra_grade.html', {'course': course, 'form': form})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def download_sample_file(request, course_id):
     User = get_user_model()
     response = HttpResponse(content_type='text/csv')
@@ -767,7 +766,7 @@ def download_sample_file(request, course_id):
     return response
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def download_course_content(request, course_id, lesson_id=None):
     # Creating temporary directories
     s3_client = boto3.client('s3')
@@ -824,35 +823,35 @@ def download_course_content(request, course_id, lesson_id=None):
     return response
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def list_students(request, course_id):
     user = get_object_or_404(get_user_model(), id=request.user.id)
     course = get_object_or_404(Course, id=course_id)
     if user.user_type != 'I':
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     students = get_user_model().objects.filter(courses__id=course_id, user_type='S')
     return render(request, 'course/course_progress_instructor/list_students.html', {'students': students, 'course': course})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_user_grades(request, course_id, user_id):
     course = get_object_or_404(Course, id=course_id)
     logged_in_user = get_object_or_404(get_user_model(), id=request.user.id)
     student = get_object_or_404(get_user_model(), id=user_id)
     if logged_in_user.user_type != 'I':
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     context = get_user_grades_for_instructor(course, student)
     return render(request, 'course/course_progress_instructor/view_user_grades.html', context)
     
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_user_progress(request, course_id, user_id):
     logged_in_user = get_object_or_404(get_user_model(), id=request.user.id)
     course = get_object_or_404(Course, id=course_id)
     student = get_object_or_404(get_user_model(), id=user_id)
     if logged_in_user.user_type != 'I':
-        return redirect('user:forbidden')
+        return redirect('forbidden')
     context = get_user_course_progress(course, student)
     context['student'] = student
     return render(request, 'course/course_progress_instructor/view_user_progress.html', context)
@@ -880,3 +879,23 @@ def get_user_grades_for_instructor(course, user):
         'assignment_grade_form': AssignmentGradeForm(),
         'quiz_grade_form': QuizGradeForm(),
     }
+
+
+@login_required(login_url='login')
+def delete_content(request, course_id, content_id):
+    course = get_object_or_404(Course, id=course_id)
+    if request.user.user_type != 'I':
+        return redirect('forbidden')
+    content = get_object_or_404(Content, id=content_id)
+    content.delete()
+    return redirect('course:list_lesson', course_id=course.id)
+
+
+@login_required(login_url='login')
+def delete_lesson(request, course_id, lesson_id):
+    course = get_object_or_404(Course, id=course_id)
+    if request.user.user_type != 'I':
+        return redirect('forbidden')
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    lesson.delete()
+    return redirect('course:list_lesson', course_id=course.id)

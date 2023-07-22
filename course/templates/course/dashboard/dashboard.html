@@ -68,12 +68,11 @@
                         {% for quiz in quizzes %}
                             <div class="col-md-4 m-2 p-3 card mb-2">
                                 <div class="card-body">
-                                <h3 class="card-title">{{ quiz.name }}</h3>
-                                <p class="card-text">{{ quiz.description }}</p>
-                                <p class="card-subtitle mb-2"><strong>Due date</strong>: {{ quiz.due_date }}</p>
-                                <p class="card-subtitle mb-2"><strong>Attempts allowed</strong>: {{ quiz.attempts_allowed }}</p>
-                                <p class="card-subtitle mb-2"><strong>Created on</strong>: {{ quiz.creation_date }}</p>
-                                <p class="card-subtitle mb-2"><strong>Published</strong>: {{ quiz.is_published }}</p>
+                                    <a href="{% url 'course:attempt_quiz' course.id quiz.id %}"><h3 class="card-title">{{ quiz.name }}</h3></a>
+                                    <p class="card-text">{{ quiz.description }}</p>
+                                    <p class="card-subtitle mb-2"><strong>Due date</strong>: {{ quiz.due_date }}</p>
+                                    <p class="card-subtitle mb-2"><strong>Attempts allowed</strong>: {{ quiz.attempts_allowed }}</p>
+                                    <p class="card-subtitle mb-2"><strong>Created on</strong>: {{ quiz.creation_date }}</p>
                                 </div>
                             </div>
                         {% empty %}

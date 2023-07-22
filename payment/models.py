@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from course.models import Course
 
 class BillingAddress(models.Model):
-    full_name = models.CharField(max_length=300, blank=False)
     email = models.EmailField(max_length=254, blank=False)
     address1 = models.CharField(max_length=300, blank=False)
     address2 = models.CharField(max_length=300, blank=True)
@@ -27,6 +26,7 @@ class Order(models.Model):
     email = models.EmailField(max_length=254, blank=False)
     shipping_address = models.TextField(max_length=2000, blank=False)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, blank=False)
+    is_paid = models.BooleanField(default=True)
     date_ordered = models.DateTimeField(auto_now_add=True)
 
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True, blank=True)

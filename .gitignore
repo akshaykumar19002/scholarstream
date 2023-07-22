@@ -3,3 +3,4 @@ venv
 .idea
 scholarstream/.env
 .vscode
+static/admin

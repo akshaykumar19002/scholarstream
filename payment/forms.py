@@ -5,7 +5,7 @@ from .models import *
 class BillingForm(forms.ModelForm):
     class Meta:
         model = BillingAddress
-        fields = ['full_name', 'email', 'address1', 'address2', 'city', 'state', 'zipcode',]
+        fields = ['email', 'address1', 'address2', 'city', 'state', 'zipcode',]
 
         exclude = ['user',]
 
