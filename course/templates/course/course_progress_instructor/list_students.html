@@ -42,7 +42,7 @@
             <tr>
                 <td class="text-center"> {{ student.id }} </td>
                 <td class="text-center">{{ student.get_full_name }}</td>
-                <td class="text-center">{{ student.email }}</td>
+                <td class="text-center"><a href="mailto:{{ student.email }}">{{ student.email }}</a></td>
                 <td class="text-center"><a href="{% url 'course:view_user_progress' course.id student.id %}">View</a></td>
                 <td class="text-center"><a href="{% url 'course:view_user_grades' course.id student.id %}">View</a></td>
             </tr>

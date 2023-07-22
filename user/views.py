@@ -34,7 +34,7 @@ class Register(View):
             user.save()
 
             current_site = get_current_site(request)
-            mail_subject = 'user verification email'
+            mail_subject = 'User Verification Email'
             message = render_to_string('user/registration/email-verification.html', {
                 'user': user,
                 'domain': current_site.domain,
@@ -214,3 +214,10 @@ def view_user_progress(request):
         'progress_data': progress_data,
     }
     return render(request, 'user/dashboard/user_progress.html', context)
+
+
+def email_user(subject, user, template, context):
+    mail_subject = subject
+    message = render_to_string(template, context)
+    user.email_user(mail_subject, message)
+    
