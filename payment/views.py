@@ -13,17 +13,17 @@ from payment.utils import check_if_user_has_subscription
 
 from paypal.standard.forms import PayPalPaymentsForm
 
+@login_required(login_url='login')
 def checkout(request):
     form = BillingForm()
-    if request.user.is_authenticated:
-        try:
-            shipping_address = BillingAddress.objects.get(user=request.user.id)
-            form = BillingForm(shipping_address.__dict__)
-            return render(request, 'payment/checkout.html', {'shipping_address': shipping_address, 'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
-        except:
-            return render(request, 'payment/checkout.html',  {'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
-    return render(request, 'payment/checkout.html',  {'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
-
+    if request.user.user_type == 'I':
+        return redirect('forbidden')
+    try:
+        shipping_address = BillingAddress.objects.get(user=request.user.id)
+        form = BillingForm(shipping_address.__dict__)
+        return render(request, 'payment/checkout.html', {'shipping_address': shipping_address, 'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
+    except:
+        return render(request, 'payment/checkout.html',  {'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
 
 
 @login_required(login_url='login')
