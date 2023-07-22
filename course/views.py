@@ -128,7 +128,7 @@ class AddLesson(LoginRequiredMixin, View):
         if form.is_valid():
             new_lesson = Lesson(course=course, title=form.cleaned_data['title'])
             new_lesson.save()
-            return redirect('course:detail', pk=course_id)
+            return redirect('course:list_lessons', pk=course_id)
         else:
             return render(request, 'course/lesson/add_lesson.html', {'form': form, 'course': course})
 
@@ -208,7 +208,7 @@ class AddContent(LoginRequiredMixin, View):
             new_content.order = max_order + 1 if max_order is not None else 0
 
             new_content.save()
-            return redirect('course:detail', pk=course_id)
+            return redirect('course:view_lesson', course_id, lesson_id)
         else:
             print(form.errors)
             return render(request, 'course/content/add_content.html', {'form': form, 'course': course})
@@ -888,7 +888,7 @@ def delete_content(request, course_id, content_id):
         return redirect('forbidden')
     content = get_object_or_404(Content, id=content_id)
     content.delete()
-    return redirect('course:list_lesson', course_id=course.id)
+    return redirect('course:list_lessons', course_id=course.id)
 
 
 @login_required(login_url='login')
@@ -898,4 +898,4 @@ def delete_lesson(request, course_id, lesson_id):
         return redirect('forbidden')
     lesson = get_object_or_404(Lesson, id=lesson_id)
     lesson.delete()
-    return redirect('course:list_lesson', course_id=course.id)
+    return redirect('course:list_lessons', course_id=course.id)

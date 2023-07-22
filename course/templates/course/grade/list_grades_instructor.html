@@ -50,12 +50,12 @@
                     {% for progress in assignment.progress.all %}
                         <td>Assignment
                         <td>{{ progress.student.get_full_name }}</td>
-                        <td>{{ assignment.title }}</td>
+                        <td><a href="{% url 'course:view_assignment' course.id assignment.id %}">{{ assignment.title }}</a></td>
                         <td>{{ assignment.due_date }}</td>
                         <td>{{ progress.created_at }}</td>
                         <td>{{ progress.grade }}</td>
                     {% empty %}
-                        <td colspan="6">No evaluations done so far</td>
+                        <td colspan="6" class="text-center">No evaluations done so far</td>
                     {% endfor %}
                 </tr>
             </tbody>
@@ -81,7 +81,7 @@
                     <tr>
                         <td>Quiz</td>
                         <td>{{ student.student }}</td>
-                        <td>{{ student.quiz.name }}</td>
+                        <td><a href="{% url 'course:view_quiz' course.id quiz.id %}">{{ student.quiz.name }}</a></td>
                         <td>{{ student.quiz.due_date }}</td>
                         <td>{{ student.created_at }}</td>
                         {% if student.total_score and student.total_score != -1 %}
@@ -102,7 +102,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6">No quiz evaluations done so far. </td>
+                        <td colspan="6" class="text-center">No quiz evaluations done so far. </td>
                     </tr>
                 {% endfor %}
 
@@ -140,7 +140,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6">No extra evaluations done so far. </td>
+                        <td colspan="6" class="text-center">No extra evaluations done so far. </td>
                     </tr>
                 {% endfor %}
 
