@@ -30,7 +30,7 @@
                 </div>
                 <div class="card-body">
                     <div class="bg-danger p-1 pt-3 w-100">
-                        <p> USD <strong>{{ details.0 }}</strong> </p>
+                        <p> {{ details.4 }} <strong>{{ details.0 }}</strong> </p>
                     </div>
 
                     <div class="pt-2 w-100">
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="p-1 pt-2 w-100">
-                        <button class="btn btn-primary subscribe-btn" data-subscription-type="{{ subscription_type }}"> Subscribe </button>
+                        <button class="btn btn-primary subscribe-btn" data-currency={{ details.4 }} data-price={{ details.0 }} data-subscription-type="{{ subscription_type }}"> Subscribe </button>
                     </div>
 
                 </div>
@@ -55,11 +55,15 @@
     $(document).ready(function() {
         $('.subscribe-btn').click(function() {
             var subscriptionType = $(this).data('subscription-type');
+            var currency = $(this).data('currency');
+            var price = $(this).data('price');
             $.ajax({
                 type: "POST",
                 url: "{% url 'payment:subscription' %}",
                 data: {
                     subscription_type: subscriptionType,
+                    currency: currency,
+                    price: price,
                     csrfmiddlewaretoken: '{{ csrf_token }}'
                 },
                 success: function(response) {
