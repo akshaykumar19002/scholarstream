@@ -3,33 +3,50 @@
 {% block content %}
 
 <div class="container-fluid px-3">
-<h2> Progress </h2>
+    <h2>Progress</h2>
+
+    <style>
+        .progress {
+            height: 30px;
+            margin-bottom: 10px;
+        }
+        .incomplete {
+            background-color: #fff;
+            color: #000;
+        }
+    </style>
 
     <h3>Lessons</h3>
     {% for lesson in lessons %}
-        {% if lesson.progress != None and lesson.progress.is_complete %}
-            <p> {{ lesson.title }} - Complete</p>
-        {% else %}
-            <p> {{ lesson.title }} - Incomplete</p>
-        {% endif %}
+        <div class="progress">
+            {% if lesson.progress != None and lesson.progress.is_complete %}
+                <div class="progress-bar bg-success" style="width: 100%;">{{ lesson.title }} - Complete</div>
+            {% else %}
+                <div class="progress-bar incomplete" style="width: 100%;">{{ lesson.title }} - Incomplete</div>
+            {% endif %}
+        </div>
     {% endfor %}
 
     <h3>Assignments</h3>
     {% for assignment in assignments %}
-    {% if assignment.prog != None and assignment.prog.is_complete %}
-        <p> {{ assignment.title }} - Complete </p>
-    {% else %}
-        <p> {{ assignment.title }} - Incomplete </p>
-    {% endif %}
+        <div class="progress">
+            {% if assignment.prog != None and assignment.prog.is_complete %}
+                <div class="progress-bar bg-success" style="width: 100%;">{{ assignment.title }} - Complete</div>
+            {% else %}
+                <div class="progress-bar incomplete" style="width: 100%;">{{ assignment.title }} - Incomplete</div>
+            {% endif %}
+        </div>
     {% endfor %}
 
     <h3>Quizzes</h3>
     {% for quiz in quizzes %}
-    {% if quiz.progress != None and quiz.progress.is_complete %}
-        <p> {{ quiz.name }} - Complete </p>
-    {% else %}
-        <p> {{ quiz.name }} - Incomplete </p>
-    {% endif %}
+        <div class="progress">
+            {% if quiz.progress != None and quiz.progress.is_complete %}
+                <div class="progress-bar bg-success" style="width: 100%;">{{ quiz.name }} - Complete</div>
+            {% else %}
+                <div class="progress-bar incomplete" style="width: 100%;">{{ quiz.name }} - Incomplete</div>
+            {% endif %}
+        </div>
     {% endfor %}
 </div>
 
