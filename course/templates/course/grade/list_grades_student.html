@@ -40,7 +40,7 @@
         {% for assignment, progress in assignments.items %}
             <tr>
                 <td>Assignment
-                <td>{{ assignment.title }}</td>
+                <td><a href="{% url 'course:view_assignment' course.id assignment.id %}">{{ assignment.title }}</a></td>
                 <td>{{ assignment.due_date }}</td>
                 <td>{{ progress.created_at }}</td>
                 <td>{{ progress.grade }}</td>
@@ -51,8 +51,7 @@
         {% for quiz in quizzes %}
             <tr>
                 <td>Quiz</td>
-                <td>{{ quiz.quiz.name }}</td>
-                <td>{{ quiz.quiz.description }}</td>
+                <td><a href="{% url 'course:attempt_quiz' course.id quiz.quiz.id %}">{{ quiz.quiz.name }}</a></td>
                 <td>{{ quiz.quiz.due_date }}</td>
                 <td>{{ quiz.created_at }}</td>
                 {% if quiz.total_score and quiz.total_score != -1 %}
@@ -63,7 +62,7 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="6" class="text-center">No quiz attempts done so far. </td>
+                <td colspan="5" class="text-center">No quiz attempts done so far. </td>
             </tr>
         {% endfor %}
         {% for otherGrade in otherGrades %}
@@ -71,7 +70,6 @@
                 <td>Extra</td>
                 <td>{{ otherGrade.name }}</td>
                 <td>{{ otherGrade.description }}</td>
-                <td> - </td>
                 <td>{{ otherGrade.created_at }}</td>
                 {% if otherGrade.grade %}
                     <td>{{ otherGrade.grade }}</td>
@@ -81,7 +79,7 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="6" class="text-center">No extra evaluations done so far. </td>
+                <td colspan="5" class="text-center">No extra evaluations done so far. </td>
             </tr>
         {% endfor %}
 

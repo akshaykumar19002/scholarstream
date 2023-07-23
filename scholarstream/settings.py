@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+GEOIP_PATH = os.path.join(BASE_DIR, 'GeoLite2-Country.mmdb')
+
 PAYPAL_TEST = True
 
 PAYPAL_RECEIVER_EMAIL = env('PAYPAL_RECEIVER_EMAIL')
@@ -200,4 +202,4 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = [BASE_DIR / 'static']

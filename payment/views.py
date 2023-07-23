@@ -5,6 +5,11 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.contrib.gis.geoip2 import GeoIP2
+
+from ipware import get_client_ip
+import requests
+from decimal import Decimal
 
 from .models import *
 from cart.cart import Cart
@@ -12,6 +17,11 @@ from .forms import SubscriptionForm, BillingForm
 from payment.utils import check_if_user_has_subscription
 
 from paypal.standard.forms import PayPalPaymentsForm
+
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
 
 @login_required(login_url='login')
 def checkout(request):
@@ -92,30 +102,75 @@ def payment_success(request):
 def payment_failed(request):
     return render(request, 'payment/payment_failed.html')
 
+def get_currency_code(country_code):
+    response = requests.get(f"https://restcountries.com/v2/alpha/{country_code}")
+    data = response.json()
+    if 'currencies' in data:
+        currency = data['currencies'][0]
+        return currency['code']
+    else:
+        return None
+    
+def get_exchange_rate(base_currency, target_currency):
+    OPEN_EXCHANGE_RATES_APP_ID = env('OPEN_EXCHANGE_RATES_APP_ID')
+    url = f'https://openexchangerates.org/api/latest.json?app_id={OPEN_EXCHANGE_RATES_APP_ID}&base={base_currency}&symbols={target_currency}'
+    response = requests.get(url)
+    data = response.json()
+    return data['rates'][target_currency]
+
+def get_currency_from_ip(ip_address):
+    g = GeoIP2()
+    country_code = g.country(ip_address)['country_code']
+    currency_code = get_currency_code(country_code)
+    return currency_code
+
+def convert_currency(amount, from_currency_code, to_currency_code):
+    exchange_rate = get_exchange_rate(from_currency_code, to_currency_code)
+    return amount * exchange_rate
+
+def convert(request, amount):
+    ip, is_routable = get_client_ip(request)
+    currency_code = get_currency_from_ip(ip)
+    target_price = convert_currency(amount, 'USD', currency_code)
+    target_price = Decimal(target_price).quantize(Decimal('.01'))
+    return target_price, currency_code
 
 @login_required(login_url='login')
 def subscription(request):
     user = get_user_model().objects.get(pk=request.user.id)
     if request.method == 'POST':
         subscription_plan = request.POST.get('subscription_type')
+        currency = request.POST.get('currency')
+        price = request.POST.get('price')
     
         request.session['subscription_plan'] = subscription_plan
+        request.session['currency'] = currency
+        request.session['price'] = price
         return redirect('payment:process_subscription')
     else:
-        f = SubscriptionForm()
+        subs = {}
+        for sub, sub_details in SUBSCRIPTION_PRICING.items():
+            price, currency = convert(request, sub_details[0])
+            print(sub_details[0], price, currency)
+            subs[sub] = [price, sub_details[1], sub_details[2], sub_details[3], currency]
+        print(subs)
+        
         subscription = Subscription.objects.filter(user=user).order_by('-id')
         if len(subscription) > 0:
             subscription = subscription[0]
             subscription.type = SUBSCRIPTION_PRICING[subscription.subscription_type][3]
         else:
             subscription = None
-    return render(request, 'payment/subscription/subscription_form.html', {'form': f, 'subs': SUBSCRIPTION_PRICING, 'subscription': subscription} )
+    return render(request, 'payment/subscription/subscription_form.html', {'subs': subs, 'subscription': subscription} )
 
 
 @login_required(login_url='login')
 def process_subscription(request):
 
     subscription_plan = request.session.get('subscription_plan')
+    currency = request.session.get('currency')
+    price = request.session.get('price')
+    
     host = request.get_host()
     
     subscription_details = SUBSCRIPTION_PRICING[subscription_plan]
@@ -129,7 +184,7 @@ def process_subscription(request):
     paypal_dict  = {
         "cmd": "_xclick-subscriptions",
         'business': settings.PAYPAL_RECEIVER_EMAIL,
-        "a3": str(subscription_details[0]),  # monthly price
+        "a3": str(price),  # monthly price
         "p3": subscription_details[1],  # duration of each unit (depends on unit)
         "t3": subscription_details[2],  # duration unit ("M for Month")
         "src": "1",  # make payments recur
@@ -137,7 +192,7 @@ def process_subscription(request):
         "no_note": "1",  # remove extra notes (optional)
         'item_name': 'Scholar Stream subscription',
         'custom': 1,     # custom data, pass something meaningful here
-        'currency_code': 'USD',
+        'currency_code': currency,
         'notify_url': 'http://{}{}'.format(host,
                                            reverse('paypal-ipn')),
         'return_url': 'http://{}{}'.format(host,

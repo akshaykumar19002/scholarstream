@@ -25,11 +25,6 @@
         <div class="col-4">
             <h3> Students </h3>
         </div>
-        {% if user.is_authenticated and user.user_type == 'I' %}
-        <div class="col">
-            <a href="" class="btn btn-primary float-end">Add Students</a>
-        </div>
-        {% endif %}
     </div>
     <br>
 <table>
@@ -47,7 +42,7 @@
             <tr>
                 <td class="text-center"> {{ student.id }} </td>
                 <td class="text-center">{{ student.get_full_name }}</td>
-                <td class="text-center">{{ student.email }}</td>
+                <td class="text-center"><a href="mailto:{{ student.email }}">{{ student.email }}</a></td>
                 <td class="text-center"><a href="{% url 'course:view_user_progress' course.id student.id %}">View</a></td>
                 <td class="text-center"><a href="{% url 'course:view_user_grades' course.id student.id %}">View</a></td>
             </tr>

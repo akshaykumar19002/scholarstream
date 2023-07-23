@@ -9,11 +9,12 @@ from payment.models import BillingAddress
 class UserRegisterForm(UserCreationForm):
     class Meta:
         model = UserModel
-        fields = ['username', 'email', 'password1', 'password2', 'user_type']
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'user_type']
 
     def __init__(self, *args, **kwargs) -> None:
         super(UserRegisterForm, self).__init__(*args, **kwargs)
-
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
         self.fields['email'].required = True
         self.fields['user_type'].required = True
 

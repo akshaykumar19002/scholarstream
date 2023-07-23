@@ -51,14 +51,12 @@
         </div>
         <br>
         <div class="form-group">
-            <label for="{{ form.comment.id_for_label }}">Review</label>
-            {{ form.comment }}
+            {{ form.comment|as_crispy_field }}
         </div>
         <br>
 
         <div class="form-group">
-            <label for="{{ form.anonymous.id_for_label }}">Anonymous</label>
-            {{ form.anonymous }}
+            {{ form.anonymous|as_crispy_field }}
         </div>
         <br>
         
