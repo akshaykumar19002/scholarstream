@@ -28,9 +28,9 @@
                     {% endfor %}
 
                     <h3>Assignments</h3>
-                    {% for assignment in progress.assignments %}
+                    {% for assignment in prog.assignments %}
                     <p> {{ assignment.title }} - Status: 
-                        {% if assignment.progress != None and assignment.progress.is_complete %}
+                        {% if assignment.prog != None and assignment.prog.is_complete %}
                             Complete
                         {% else %}
                             Incomplete

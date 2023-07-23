@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 from django.contrib.sites.shortcuts import get_current_site
 from .models import UserModel as User
 from django.views import View
 from payment.models import *
-from course.models import LessonProgress, AssignmentProgress, QuizProgress, Course
+from course.models import LessonProgress, AssignmentProgress, QuizProgress
 
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
@@ -41,7 +43,7 @@ class Register(View):
             })
             user.email_user(mail_subject, message)
 
-            return redirect('user:email-verification-sent')
+            return redirect('email-verification-sent')
         return render(request, 'user/registration/register.html', {'form': form})
         
 
@@ -53,16 +55,16 @@ class Login(View):
     
     def post(self, request):
         form = LoginForm(request, data=request.POST)
-
+        
         if form.is_valid():
             username = request.POST.get('username')
             password = request.POST.get('password')
-
+            
             user = authenticate(request, username=username, password=password)
-
             if user:
                 login(request, user)
-                return redirect('course:list')
+                next_url = request.GET.get('next', reverse('course:list'))
+                return HttpResponseRedirect(next_url)
         return render(request, 'user/login.html', {'form': form})
 
 def email_verification(request, uidb64, token):
@@ -73,9 +75,9 @@ def email_verification(request, uidb64, token):
     if user is not None and user_tokenizer_generate.check_token(user, token):
         user.is_active = True
         user.save()
-        return redirect('user:email-verification-success')
+        return redirect('email-verification-success')
     else:
-        return redirect('user:email-verification-failed')
+        return redirect('email-verification-failed')
 
 def email_verification_sent(request):
     return render(request, 'user/registration/email-verification-sent.html')
@@ -97,10 +99,10 @@ def user_logout(request):
 
     messages.success(request, 'You have been logged out successfully.')
 
-    return redirect('user:login')
+    return redirect('login')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def delete_user(request):
     user = User.objects.get(id=request.user.id)
     
@@ -112,7 +114,7 @@ def delete_user(request):
     return render(request, 'user/delete-user.html')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def user_profile(request):
     User = get_user_model()
     user = User.objects.get(id=request.user.id)
@@ -157,19 +159,19 @@ def user_profile(request):
 def forbidden_error(request):
     return render(request, 'user/forbidden.html')
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def user_orders(request):
     user = User.objects.get(id=request.user.id)
     orders = Order.objects.filter(user=user).order_by('-date_ordered')
     return render(request, 'user/dashboard/orders.html', {'orders': orders})
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def order_detail(request, order_id):
     order = Order.objects.get(id=order_id, user=request.user)
     return render(request, 'user/dashboard/order_detail.html', {'order': order})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def view_user_progress(request):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     user_courses = user.courses.all()
@@ -188,9 +190,9 @@ def view_user_progress(request):
         for assignment in assignments:
             progress = AssignmentProgress.objects.filter(assignment=assignment, student=user)
             if len(progress) == 0:
-                assignment.progress = None
+                assignment.prog = None
             else:
-                assignment.progress = progress[0]
+                assignment.prog = progress[0]
         
         quizzes = course.quizzes.all()
         for quiz in quizzes:

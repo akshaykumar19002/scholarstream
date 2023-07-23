@@ -2,6 +2,8 @@
 
 {% load static %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 
 <style>   
@@ -16,66 +18,17 @@
 
     <br>
     <div class="container bg-white shadow-md p-5" style="width:500px; border-radius:20px;">
-        <form id="form" method="post" action="{% url 'payment:complete-order' %}" {% if cart.get_total_price != 0 %}onsubmit="event.preventDefault();"{% endif %}>
+        <form id="form" method="post" action="{% url 'payment:complete-order' %}" {% if cart.get_total_price != 0 or has_subscription %}onsubmit="event.preventDefault();"{% endif %}>
             {% csrf_token %}
             <div>
                 <h3> <i class="fa fa-chevron-circle-right" aria-hidden="true"></i> &nbsp; Complete your order </h3>
                 <p> Please enter in the relevant information below. </p>
 
                 <hr>
-                <br>
 
-                <div class="form-field">              
-                    <input class="form-control validate" name="name" id="name" type="text" placeholder="Full name*" autocomplete="off" value="{{shipping_address.full_name}}" required>
-                </div>
+                {{ form|crispy}}
 
-                <br>
-
-                <div class="form-field">
-                    <input class="form-control validate" name="email" id="email" type="email" placeholder="Email address*" autocomplete="off" value="{{shipping_address.email}}" required>
-                </div>
-                
-                <br>
-                
-                <div class="form-field">
-                    <input class="form-control validate" name="address1" id="address1" type="text" placeholder="Address 1*" autocomplete="off" value="{{shipping_address.address1}}" required>
-                </div>
-
-                <br>
-
-                <div class="form-field">
-                    <input class="form-control" name="address2" id="address2" type="text" placeholder="Address 2 (Optional)" autocomplete="off" value="{{shipping_address.address2}}">
-                </div>
-
-                <br>
-
-                <div class="form-field">
-                    <input class="form-control validate" name="city" id="city" type="text" placeholder="City*" autocomplete="off" value="{{shipping_address.city}}" required>
-                </div>
-
-                <br>
-
-                <div class="form-field">
-                    <input class="form-control" name="state" id="state" type="text" placeholder="State (Optional)" autocomplete="off" value="{{shipping_address.state}}">
-                </div>
-
-                <br>
-
-                <div class="form-field">
-                    <input class="form-control" name="zipcode" id="zipcode" type="text" placeholder="Zip code (Optional)" autocomplete="off" value="{{shipping_address.zipcode}}">
-                </div>
-        
-            </div>
-
-            <br>
-            <!--
-            <button id="complete-order" type="submit" class="btn btn-primary w-100 p-2 text-white"> &nbsp; Complete order </button>
-          
-            <br>
-            <br>
-            -->
-
-            {% if cart.get_total_price == 0 %}
+            {% if cart.get_total_price == 0 or has_subscription %}
                 <button type="submit" class="btn btn-primary w-100 btn-lg">Proceed</button>
             {% else %}
                 <div id="paypal-button-container"></div>
@@ -93,7 +46,7 @@
 
 <script>
 
-    {% if cart.get_total_price != 0 %}
+    {% if cart.get_total_price != 0 and not has_subscription %}
     const paypalButtonsComponent = paypal.Buttons({
         // optional styling for buttons
         // https://developer.paypal.com/docs/checkout/standard/customize/buttons-style-guide/
@@ -172,8 +125,7 @@
 
                     type: 'POST',
                     url: '{% url "payment:complete-order" %}',
-                    data: { 
-                        name: $('#name').val(),
+                    data: {
                         email: $('#email').val(),
         
                         address1: $('#address1').val(),
@@ -219,22 +171,35 @@
         $("#form").submit(function(e) {
             e.preventDefault();  //prevent form from submitting
             var formData = new FormData(this);
+            var verified = true;
+
+            function checkInputs() {
+                $(':input[required]').each(function() {
+                    if ($(this).val() == '') {
+                        return verified = false;
+                    }
+                });
+                return verified;
+            }
+
+            if (!checkInputs()) {
+                alert('Please fill out all required fields.');
+            }
         
             $.ajax({
                 url: $(this).attr('action'),
                 type: $(this).attr('method'),
                 data: formData,
+                contentType: false,
+                processData: false,
                 success: function (data) {
-                    console.log(json)
+                    console.log(data)
                     window.location.replace("{% url 'payment:success' %}");
                 },
                 error: function(xhr, errmsg, err) {
                     console.log(xhr.status + ": " + xhr.responseText);
                     window.location.replace("{% url 'payment:failed' %}");
                 }
-                cache: false,
-                contentType: false,
-                processData: false
             });
         });    
         

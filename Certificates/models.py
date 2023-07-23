@@ -4,6 +4,9 @@ import os
 import mimetypes
 from django.utils.deconstruct import deconstructible
 from django.conf import settings
+from django.db import models
+from django.contrib.auth import get_user_model
+
 
 
 class Course(models.Model):
@@ -156,7 +159,6 @@ class Quiz(models.Model):
     def __str__(self):
         return self.name
 
-
 class Question(models.Model):
     QUIZ_TYPES = (
         ('MCQ', 'Multiple Choice Question'),
@@ -170,7 +172,6 @@ class Question(models.Model):
 
     def __str__(self):
         return self.question_text
-
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
@@ -224,47 +225,17 @@ class OtherGrade(models.Model):
         unique_together = ('student', 'name')
 
 
-import os
-import cv2
+# certificates/models.py
+
 from django.db import models
 from django.contrib.auth import get_user_model
-
-def delete_previous_certificates():
-    folder_path = "generated-certificates/"
-    if os.path.exists(folder_path):
-        file_list = os.listdir(folder_path)
-        for file_name in file_list:
-            file_path = os.path.join(folder_path, file_name)
-            os.remove(file_path)
-
-
+from course.models import Course
 
 class Certificate(models.Model):
-    title = models.CharField(max_length=100)
-    recipient_name = models.CharField(max_length=100)
-    issue_date = models.DateField()
-    image = models.ImageField(upload_to='certificates/', null=True, blank=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    certificate_image = models.ImageField(upload_to='certificates/', null=True, blank=True)
 
-    def generate_certificate(self):
-
-        if self.image:
-            return
-
-
-        if self.user.subscription_set.filter(is_active=True).exists():
-
-            names = [self.recipient_name]
-            generate_certificates(names)
-
-
-            output_folder = "generated-certificates/"
-            image_name = f"{self.recipient_name}.jpg"
-            image_path = os.path.join(output_folder, image_name)
-
-            self.image.save(image_name, open(image_path, 'rb'), save=True)
 
     def __str__(self):
-        return f"Certificate for {self.recipient_name}"
-
-
+        return f"Certificate for {self.user.full_name} - {self.course.title}"

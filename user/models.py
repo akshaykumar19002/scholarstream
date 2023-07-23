@@ -7,7 +7,6 @@ class UserModel(AbstractUser):
     TYPES = [
         ('S', 'Student'),
         ('I', 'Instructor'),
-        ('GA', 'Graduate Assistant')
     ]
     user_type = models.CharField(max_length=2, choices=TYPES, default='S')
     courses = models.ManyToManyField(Course, blank=True)

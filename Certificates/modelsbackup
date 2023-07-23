@@ -4,12 +4,7 @@ import os
 import mimetypes
 from django.utils.deconstruct import deconstructible
 from django.conf import settings
-import os
-import cv2
-from io import BytesIO
-from django.core.files import File
-from django.core.files.storage import default_storage
-from django.contrib.auth import get_user_model
+
 
 class Course(models.Model):
     name = models.CharField(max_length=100)
@@ -161,7 +156,6 @@ class Quiz(models.Model):
     def __str__(self):
         return self.name
 
-
 class Question(models.Model):
     QUIZ_TYPES = (
         ('MCQ', 'Multiple Choice Question'),
@@ -175,7 +169,6 @@ class Question(models.Model):
 
     def __str__(self):
         return self.question_text
-
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
@@ -228,50 +221,3 @@ class OtherGrade(models.Model):
     class Meta:
         unique_together = ('student', 'name')
 
-def generate_certificates(names):
-    template_path = "certificate-template.jpg"
-    output_folder = "generated-certificates/"
-    os.makedirs(output_folder, exist_ok=True)
-
-    for index, name in enumerate(names, start=1):
-        certificate_image = cv2.imread(template_path)
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 5
-        font_thickness = 10
-        text_color = (0, 0, 0)
-
-
-        (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
-        position_x = int((certificate_image.shape[1] - text_width) / 2)
-        position_y = int((certificate_image.shape[0] + text_height) / 2)
-
-
-        cv2.putText(certificate_image, name, (position_x, position_y), font, font_scale, text_color, font_thickness,
-                    cv2.LINE_AA)
-
-
-        file_name = f"{name}.jpg"
-        file_path = os.path.join(output_folder, file_name)
-        cv2.imwrite(file_path, certificate_image)
-
-
-        with open(file_path, 'rb') as file:
-            certificate_file = File(file)
-
-
-        certificate = Certificate(name=name, certificate=certificate_file)
-        certificate.save()
-
-        print(f"Processing {index} / {len(names)}")
-
-
-        os.remove(file_path)
-
-class Certificate(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)  # Foreign key to link the certificate to a course
-    certificate_file = models.FileField(upload_to='certificates/')
-    date_created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Certificate for {self.user.username} - {self.course.name}"

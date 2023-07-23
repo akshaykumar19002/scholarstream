@@ -31,7 +31,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env('ALLOWED_HOSTS').split(',')
 
 
 # Application definition
@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     'paypal.standard.ipn',
     'feedback.apps.FeedbackConfig',
+    'corsheaders',
 ]
 
 PAYPAL_TEST = True
@@ -68,6 +69,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -93,6 +95,9 @@ TEMPLATES = [
         },
     },
 ]
+
+# Allow all origins to make cross-site HTTP requests
+CORS_ALLOW_ALL_ORIGINS = True
 
 WSGI_APPLICATION = 'scholarstream.wsgi.application'
 
@@ -194,3 +199,5 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
 ADMIN_MEDIA_PREFIX = '/static/admin/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')

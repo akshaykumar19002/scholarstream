@@ -62,6 +62,11 @@
                                         </button>
                                         <a href="{% url 'course:download_lesson_content' course.id lesson.id %}"
                                             class="btn btn-primary m-2"><i class="fa fa-download"></i></a>
+                                        
+                                        {% if user.user_type == 'I' %}
+                                            <a href="{% url 'course:delete_lesson' course.id lesson.id %}"
+                                                class="btn btn-danger m-2"><i class="fa fa-trash"></i></a>
+                                        {% endif %}
                                     </div>
                                 </h2>
                                 <div class="progress">
@@ -88,10 +93,16 @@
                                                href="{% url 'course:view_content' content_id=content.id %}">
                                                 <div class="card {% if viewed %}bg-success{% else %}bg-secondary{% endif %} text-white text-center mb-4">
                                                     <div class="card-body">
-                                                        <h5 class="card-title">{{ content.title }}</h5>
+                                                        <div class="d-flex justify-content-between">
+                                                        <h5 class="text-center card-title">{{ content.title }}</h5>
                                                         {% if viewed %}
                                                             <span class="badge bg-light text-dark">Completed</span>
                                                         {% endif %}
+                                                        {% if user.user_type == 'I' %}
+                                                            <a href="{% url 'course:delete_content' course.id content.id %}"
+                                                                class="btn btn-danger m-2"><i class="fa fa-trash"></i></a>
+                                                        {% endif %}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </a>

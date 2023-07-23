@@ -1,45 +1,45 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
-
 from django.template.loader import render_to_string
-
-from django.core.mail import send_mail
 from django.conf import settings
-
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 
 from .models import *
 from cart.cart import Cart
-from .forms import SubscriptionForm
-import json
+from .forms import SubscriptionForm, BillingForm
+from payment.utils import check_if_user_has_subscription
 
 from paypal.standard.forms import PayPalPaymentsForm
 
+@login_required(login_url='login')
 def checkout(request):
+    form = BillingForm()
+    if request.user.user_type == 'I':
+        return redirect('forbidden')
+    try:
+        shipping_address = BillingAddress.objects.get(user=request.user.id)
+        form = BillingForm(shipping_address.__dict__)
+        return render(request, 'payment/checkout.html', {'shipping_address': shipping_address, 'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
+    except:
+        return render(request, 'payment/checkout.html',  {'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
 
-    if request.user.is_authenticated:
-        try:
-            shipping_address = BillingAddress.objects.get(user=request.user.id)
-            return render(request, 'payment/checkout.html', {'shipping_address': shipping_address})
-        except:
-            return render(request, 'payment/checkout.html')
-    return render(request, 'payment/checkout.html')
 
-
-
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def complete_order(request):
-    
+    user = get_user_model().objects.get(pk=request.user.id)
     if request.method == 'POST':
-        name = request.POST.get('name')
         email = request.POST.get('email')
         address1 = request.POST.get('address1')
         address2 = request.POST.get('address2')
         city = request.POST.get('city')
         state = request.POST.get('state')
         zipcode = request.POST.get('zipcode')
+        
+        BillingAddress.objects.filter(user=request.user).delete()
+        address = BillingAddress(user=request.user, email=email, address1=address1, address2=address2, city=city, state=state, zipcode=zipcode)
+        address.save()
 
         shipping_address = (address1 + '\n' + address2 + '\n' + city + '\n' + state + '\n' + zipcode)
 
@@ -49,7 +49,10 @@ def complete_order(request):
 
         if request.user.user_type == 'S':
             try:
-                order = Order(full_name=name, email=email, shipping_address=shipping_address, amount_paid=total_cost, user=request.user)
+                if check_if_user_has_subscription(request.user):
+                    order = Order(full_name=user.get_full_name(), email=email, shipping_address=shipping_address, amount_paid=0, user=request.user, is_paid=False)
+                else:
+                    order = Order(full_name=user.get_full_name(), email=email, shipping_address=shipping_address, amount_paid=total_cost, user=request.user)
                 order.save()
                 print(cart)
                 for item in cart:
@@ -75,7 +78,7 @@ def complete_order(request):
         return JsonResponse({'status': 'error', 'message': 'Something went wrong'})
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def payment_success(request):
 
     for key in list(request.session.keys()):
@@ -85,16 +88,15 @@ def payment_success(request):
     return render(request, 'payment/payment_success.html')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def payment_failed(request):
     return render(request, 'payment/payment_failed.html')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def subscription(request):
     user = get_user_model().objects.get(pk=request.user.id)
     if request.method == 'POST':
-        f = SubscriptionForm(request.POST)
         subscription_plan = request.POST.get('subscription_type')
     
         request.session['subscription_plan'] = subscription_plan
@@ -110,7 +112,7 @@ def subscription(request):
     return render(request, 'payment/subscription/subscription_form.html', {'form': f, 'subs': SUBSCRIPTION_PRICING, 'subscription': subscription} )
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def process_subscription(request):
 
     subscription_plan = request.session.get('subscription_plan')
@@ -148,7 +150,7 @@ def process_subscription(request):
     return render(request, 'payment/subscription/process_subscription.html', locals())
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def subscription_success(request):
     user = get_user_model().objects.get(pk=request.user.id)
     subscription = Subscription.objects.filter(user=user, is_active=False).order_by('-id')[0]
@@ -157,6 +159,6 @@ def subscription_success(request):
     return render(request, 'payment/subscription/subscription_success.html')
 
 
-@login_required(login_url='user:login')
+@login_required(login_url='login')
 def subscription_failed(request):
     return render(request, 'payment/subscription/subscription_failed.html')

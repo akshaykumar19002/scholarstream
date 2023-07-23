@@ -14,4 +14,4 @@ class Review(models.Model):
     anonymous = models.BooleanField(default=False)
     
     def __str__(self):
-        return f'Review by {self.user.username} for {self.course.title}'
+        return f'Review by {self.user.username} for {self.course.name}'
