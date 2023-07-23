@@ -3,10 +3,10 @@
 import os
 import cv2
 from django.conf import settings
-from .models import Certificate
+from Certificates.models import Certificate
 
 def generate_certificate_image(name):
-    template_path = os.path.join(settings.STATIC_ROOT, 'certificate-template.jpg')
+    template_path = os.path.join(settings.STATIC_ROOT, 'static/images/certificate-template.jpg')
     output_folder = os.path.join(settings.MEDIA_ROOT, 'generated-certificates')
     os.makedirs(output_folder, exist_ok=True)
 
