@@ -17,7 +17,7 @@ class BillingAddress(models.Model):
         verbose_name_plural = 'Billing Address'
 
     def __str__(self):
-        return 'Billing Address for {}'.format(self.full_name)
+        return 'Billing Address for {}'.format(self.email)
     
 
 class Order(models.Model):
@@ -26,6 +26,7 @@ class Order(models.Model):
     email = models.EmailField(max_length=254, blank=False)
     shipping_address = models.TextField(max_length=2000, blank=False)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, blank=False)
+    currency = models.CharField(max_length=3, default='USD')
     is_paid = models.BooleanField(default=True)
     date_ordered = models.DateTimeField(auto_now_add=True)
 
@@ -42,6 +43,7 @@ class OrderItem(models.Model):
     
     course = models.ForeignKey(Course, on_delete=models.CASCADE, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=False)
+    currency = models.CharField(max_length=3, default='USD')
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
 
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True, blank=True)

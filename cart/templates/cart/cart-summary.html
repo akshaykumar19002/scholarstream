@@ -31,7 +31,7 @@
                     <div class="col border-bottom">
                         <div class="row p-3">
                         <div class="col-6"> course </div>
-                        <div class="col-6 text-end"><span class="h6 fw-bold">$ {{course.price}} </span></div>
+                        <div class="col-6 text-end"><span class="h6 fw-bold"> <strong>{{ item.currency }}</strong> {{item.price}} </span></div>
                     </div>            
                     </div>
                     
@@ -52,7 +52,7 @@
         {% endwith %}
 
         <div class="col-12 pl-3 ml-4 pr-3 mr-4 text-end">
-            <div class="h6 fw-bold"> Sub total: $ <div id="total" class="d-inline-flex"> {{cart.get_total_price}} </div>
+            <div class="h6 fw-bold"> Sub total: {{ cart.get_currency }} <div id="total" class="d-inline-flex"> {{cart.get_total_price}} </div>
         </div>
 
         <br>

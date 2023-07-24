@@ -5,27 +5,19 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
-from django.contrib.gis.geoip2 import GeoIP2
-
-from ipware import get_client_ip
-import requests
-from decimal import Decimal
 
 from .models import *
 from cart.cart import Cart
-from .forms import SubscriptionForm, BillingForm
-from payment.utils import check_if_user_has_subscription
+from .forms import BillingForm
+from payment.utils import check_if_user_has_subscription, convert_price
 
 from paypal.standard.forms import PayPalPaymentsForm
 
-import environ
-
-env = environ.Env()
-environ.Env.read_env()
 
 @login_required(login_url='login')
 def checkout(request):
     form = BillingForm()
+    cart = Cart(request)
     if request.user.user_type == 'I':
         return redirect('forbidden')
     try:
@@ -56,18 +48,17 @@ def complete_order(request):
         cart = Cart(request)
 
         total_cost = cart.get_total_price()
+        currency = cart.get_currency()
 
         if request.user.user_type == 'S':
             try:
                 if check_if_user_has_subscription(request.user):
-                    order = Order(full_name=user.get_full_name(), email=email, shipping_address=shipping_address, amount_paid=0, user=request.user, is_paid=False)
+                    order = Order(full_name=user.get_full_name(), email=email, shipping_address=shipping_address, amount_paid=0, user=request.user, is_paid=False, currency=currency)
                 else:
-                    order = Order(full_name=user.get_full_name(), email=email, shipping_address=shipping_address, amount_paid=total_cost, user=request.user)
+                    order = Order(full_name=user.get_full_name(), email=email, shipping_address=shipping_address, amount_paid=total_cost, user=request.user, currency=currency)
                 order.save()
-                print(cart)
                 for item in cart:
-                    print(item)
-                    order_item = OrderItem(course=item['course'], price=item['price'], order=order, user=request.user)
+                    order_item = OrderItem(course=item['course'], price=item['price'], order=order, user=request.user, currency=currency)
                     order_item.save()
                     get_user_model().objects.get(pk=request.user.id).courses.add(item['course'])
                 
@@ -102,38 +93,6 @@ def payment_success(request):
 def payment_failed(request):
     return render(request, 'payment/payment_failed.html')
 
-def get_currency_code(country_code):
-    response = requests.get(f"https://restcountries.com/v2/alpha/{country_code}")
-    data = response.json()
-    if 'currencies' in data:
-        currency = data['currencies'][0]
-        return currency['code']
-    else:
-        return None
-    
-def get_exchange_rate(base_currency, target_currency):
-    OPEN_EXCHANGE_RATES_APP_ID = env('OPEN_EXCHANGE_RATES_APP_ID')
-    url = f'https://openexchangerates.org/api/latest.json?app_id={OPEN_EXCHANGE_RATES_APP_ID}&base={base_currency}&symbols={target_currency}'
-    response = requests.get(url)
-    data = response.json()
-    return data['rates'][target_currency]
-
-def get_currency_from_ip(ip_address):
-    g = GeoIP2()
-    country_code = g.country(ip_address)['country_code']
-    currency_code = get_currency_code(country_code)
-    return currency_code
-
-def convert_currency(amount, from_currency_code, to_currency_code):
-    exchange_rate = get_exchange_rate(from_currency_code, to_currency_code)
-    return amount * exchange_rate
-
-def convert(request, amount):
-    ip, is_routable = get_client_ip(request)
-    currency_code = get_currency_from_ip(ip)
-    target_price = convert_currency(amount, 'USD', currency_code)
-    target_price = Decimal(target_price).quantize(Decimal('.01'))
-    return target_price, currency_code
 
 @login_required(login_url='login')
 def subscription(request):
@@ -150,10 +109,8 @@ def subscription(request):
     else:
         subs = {}
         for sub, sub_details in SUBSCRIPTION_PRICING.items():
-            price, currency = convert(request, sub_details[0])
-            print(sub_details[0], price, currency)
+            price, currency = convert_price(request, 'USD', sub_details[0])
             subs[sub] = [price, sub_details[1], sub_details[2], sub_details[3], currency]
-        print(subs)
         
         subscription = Subscription.objects.filter(user=user).order_by('-id')
         if len(subscription) > 0:

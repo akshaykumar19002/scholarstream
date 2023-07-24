@@ -14,15 +14,23 @@
                     <a href="{% url 'order_detail' order_id=order.id %}"><h3 class="card-title">Order #{{ order.id }}</h3></a>
                 </div>
                 <div class="card-body">
-                    <p><strong>Amount Paid:</strong> ${{ order.amount_paid }}</p>
+                    <p><strong>Amount Paid:</strong> {{ order.currency }} {{ order.amount_paid }}</p>
                     <p><strong>Date Ordered:</strong> {{ order.date_ordered|date:"F d, Y" }}</p>
-    
+                    
                     {% if order.orderitem_set.all|length > 0 %}
                         <h4>Order Items:</h4>
-                        {% for item in order.orderitem_set.all %}
-                            <p><strong>Course:</strong> {{ item.course.name }}</p>
-                            <p><strong>Price:</strong> ${{ item.price }}</p>
-                        {% endfor %}
+                        <div class="row ms-3">
+                            {% for item in order.orderitem_set.all %}
+                                <div class="col-md-5 shadow rounded m-2 p-2">
+                                    <p><strong>Course:</strong> {{ item.course.name }}</p>
+                                    {% if item.price == 0 %}
+                                        <p><strong>Price:</strong> Free </p>
+                                    {% else %}
+                                        <p><strong>Price:</strong> {{ item.currency }} {{ item.price }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
                         <p>No items in this order.</p>
                     {% endif %}

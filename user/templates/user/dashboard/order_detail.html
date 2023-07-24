@@ -14,16 +14,26 @@
         <p><strong>Full Name:</strong> {{ order.full_name }}</p>
         <p><strong>Email:</strong> {{ order.email }}</p>
         <p><strong>Shipping Address:</strong> {{ order.shipping_address }}</p>
-        <p><strong>Amount Paid:</strong> ${{ order.amount_paid }}</p>
+        <p><strong>Amount Paid:</strong> {{ order.currency }} {{ order.amount_paid }}</p>
         <p><strong>Date Ordered:</strong> {{ order.date_ordered|date:"F d, Y" }}</p>
 
-        <h4>Order Items:</h4>
-        {% for item in order.orderitem_set.all %}
-        <p><strong>Course:</strong> <a href="{% url 'course:detail' pk=item.course.id%}">{{ item.course.name }}</a></p>
-        <p><strong>Price:</strong> ${{ item.price }}</p>
-        {% empty %}
-        <p>No items in this order.</p>
-        {% endfor %}
+        {% if order.orderitem_set.all|length > 0 %}
+            <h4>Order Items:</h4>
+            <div class="row ms-3">
+                {% for item in order.orderitem_set.all %}
+                    <div class="col-md-4 shadow rounded m-2 p-2">
+                        <p><strong>Course:</strong> {{ item.course.name }}</p>
+                        {% if item.price == 0 %}
+                            <p><strong>Price:</strong> Free </p>
+                        {% else %}
+                            <p><strong>Price:</strong> {{ item.currency }} {{ item.price }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No items in this order.</p>
+        {% endif %}
     </div>
 </div>
 

@@ -11,6 +11,7 @@ class Course(models.Model):
     description = models.TextField()
     thumbnail = models.ImageField(upload_to='course-thumbnails/')
     price = models.IntegerField(default=0)
+    currency = models.CharField(max_length=3, default='USD')
 
     def __str__(self):
         return self.name
