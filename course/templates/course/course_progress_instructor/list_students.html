@@ -25,6 +25,9 @@
         <div class="col-4">
             <h3> Students </h3>
         </div>
+        <div class="">
+            <a href="{% url 'course:generate_certificate' course.id %}" class="float-end btn btn-primary">Generate Certificates</a>
+        </div>
     </div>
     <br>
 <table>
@@ -35,6 +38,7 @@
             <th class="text-center">Email</th>
             <th class="text-center">Progress</th>
             <th class="text-center">Grades</th>
+            <th class="text-center">Certificate</th>
         </tr>
     </thead>
     <tbody>
@@ -45,6 +49,11 @@
                 <td class="text-center"><a href="mailto:{{ student.email }}">{{ student.email }}</a></td>
                 <td class="text-center"><a href="{% url 'course:view_user_progress' course.id student.id %}">View</a></td>
                 <td class="text-center"><a href="{% url 'course:view_user_grades' course.id student.id %}">View</a></td>
+                {% if student.certificate %}
+                    <td class="text-center"><a href="{{ student.certificate.certificate_image.url }}" target="_blank">View Certificate</a></td>
+                {% else %}
+                    <td class="text-center"><a href="{% url 'course:generate_certificate_for_student' course.id student.id %}">Generate Certificate</a></td>
+                {% endif %}
             </tr>
         {% empty %}
             <tr>

@@ -54,5 +54,9 @@ urlpatterns = [
     path('<int:course_id>/list_students/', views.list_students, name='list_students'),
     path('<int:course_id>/view_user_grades/<int:user_id>/', views.view_user_grades, name='view_user_grades'),
     path('<int:course_id>/view_user_progress/<int:user_id>/', views.view_user_progress, name='view_user_progress'),
+    
+    path('<int:user_id>/view_certificates/', views.view_certificates, name='view_certificates'),
+    path('<int:course_id>/generate_certificate/', views.generate_certificate, name='generate_certificate'),
+    path('<int:course_id>/certificate/<int:student_id>/', views.generate_certificate, name='generate_certificate_for_student'),
 
 ]

@@ -11,10 +11,12 @@ from django.db import models, transaction
 from django.http import FileResponse
 from datetime import datetime
 from django.utils import timezone
+from django.core.files import File
 
 from .forms import *
 from .models import *
 from cart.cart import Cart
+from .utils import generate_certificate_image
 
 import json
 import uuid
@@ -839,6 +841,8 @@ def list_students(request, course_id):
     if user.user_type != 'I':
         return redirect('forbidden')
     students = get_user_model().objects.filter(courses__id=course_id, user_type='S')
+    for student in students:
+        student.certificate = Certificate.objects.filter(student=student, course=course).first()
     return render(request, 'course/course_progress_instructor/list_students.html',
                   {'students': students, 'course': course})
 
@@ -908,3 +912,36 @@ def delete_lesson(request, course_id, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
     lesson.delete()
     return redirect('course:list_lessons', course_id=course.id)
+
+
+@login_required(login_url='login')
+def view_certificates(request, user_id):
+    user = get_object_or_404(get_user_model(), id=user_id)
+    if request.user.user_type == 'I':
+        return redirect('forbidden')
+    certificates = Certificate.objects.filter(student=user)
+    return render(request, 'course/certificate/view_certificates.html', {'certificates': certificates})
+
+
+@login_required(login_url='login')
+def generate_certificate(request, course_id, student_id=None):
+    course = get_object_or_404(Course, id=course_id)
+    if student_id:
+        student = get_object_or_404(get_user_model(), id=student_id)
+        students = [student]
+    else:
+        student = None
+        students = get_user_model().objects.filter(courses__id=course_id, user_type='S')
+    if request.user.user_type != 'I':
+        return redirect('forbidden')
+    for student in students:
+        certificate = Certificate.objects.filter(course=course, student=student).first()
+        if certificate:
+            continue
+        cert_path = generate_certificate_image(student.get_full_name(), course.name)
+        with open(cert_path, 'rb') as file:
+            certificate = Certificate(course=course, student=student, certificate_image=File(file))
+            certificate.save()
+        if os.path.exists(cert_path):
+            os.remove(cert_path)
+    return redirect('course:list_students', course_id)

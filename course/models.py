@@ -224,11 +224,13 @@ class OtherGrade(models.Model):
     class Meta:
         unique_together = ('student', 'name')
 
-class Certificate(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    certificate_image = models.ImageField(upload_to='certificates/', null=True, blank=True)
 
+class Certificate(models.Model):
+    certificate_path = PathAndRename("certificates/")
+    
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    certificate_image = models.ImageField(upload_to=certificate_path, null=True, blank=True)
 
     def __str__(self):
-        return f"Certificate for {self.user.full_name} - {self.course.title}"
+        return f"Certificate for {self.student.get_full_name()} - {self.course.name}"

@@ -1,0 +1,45 @@
+{% extends 'user/dashboard/base_dashboard.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<style>
+    a {
+        text-decoration: none;
+        color: black;
+    }
+
+</style>
+
+<div class="container-fluid p-3">
+    <div class="row">
+    {% for certificate in certificates %}
+        <div class="card col-md-4 m-3 ps-0">
+            <div class="row no-gutters">
+            <div class="col-md-4">
+                <img src="{{ certificate.course.thumbnail.url }}" class="img img-thumbnail img-fluid" style="height:100%" alt="...">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                <h5 class="card-title">{{ certificate.course.name }}</h5>
+                <a class="btn btn-primary mt-2" href="{{ certificate.certificate_image.url }}" download><i class="fa fa-download"></i> Download Certificate</a>
+                </div>
+            </div>
+            </div>
+        </div>    
+    {% empty %}
+
+    <div class="alert alert-warning" role="alert">
+        <h4 class="alert-heading">No Certificates</h4>
+        <p>You have not earned any certificates yet.</p>
+        <hr>
+        <p class="mb-0">You can earn certificates by completing courses.</p>
+    </div>
+
+    {% endfor %}
+    </div>
+    
+</div>
+
+{% endblock %}
