@@ -24,7 +24,6 @@ tzdata
 urllib3
 Django-PayPal
 django-cors-headers
-django-currencies
 geoip2
 django-ipware
-opencv-python
+opencv-python-headless
