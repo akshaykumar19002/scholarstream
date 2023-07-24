@@ -1,9 +1,7 @@
-
-
 import os
 import cv2
 from django.conf import settings
-from Certificates.models import Certificate
+from .models import Certificate
 
 def generate_certificate_image(name):
     template_path = os.path.join(settings.STATIC_ROOT, 'static/images/certificate-template.jpg')
@@ -31,11 +29,7 @@ def generate_certificate_image(name):
 
 
 def generate_certificate(user, course):
-
     if user.is_subscribed:
-
         certificate_image_path = generate_certificate_image(user.full_name)
-
-
         certificate = Certificate(user=user, course=course, certificate_image=certificate_image_path)
         certificate.save()
