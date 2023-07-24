@@ -27,3 +27,4 @@ django-cors-headers
 django-currencies
 geoip2
 django-ipware
+opencv-python

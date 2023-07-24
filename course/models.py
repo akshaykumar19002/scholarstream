@@ -55,7 +55,7 @@ class Content(models.Model):
         (VIDEO, 'Video'),
         (OTHER, 'Other'),
     ]
-    
+
     content_path = PathAndRename("contents/")
 
     title = models.CharField(max_length=200)
@@ -117,10 +117,10 @@ class Assignment(models.Model):
 
 class AssignmentFile(models.Model):
     assignent_path = PathAndRename("assignments/")
-    
+
     file = models.FileField(upload_to=assignent_path, null=True, blank=True)
     assignment = models.ForeignKey(Assignment, related_name='files', on_delete=models.CASCADE)
-    
+
 
 class AssignmentSubmission(models.Model):
     assignment = models.ForeignKey(Assignment, related_name='submissions', on_delete=models.CASCADE)
@@ -139,7 +139,7 @@ class AssignmentSubmission(models.Model):
 
 class SubmissionFile(models.Model):
     submission_path = PathAndRename("submission/")
-    
+
     file = models.FileField(upload_to=submission_path, null=True, blank=True)
     submission = models.ForeignKey(AssignmentSubmission, related_name='files', on_delete=models.CASCADE)
 
@@ -157,6 +157,7 @@ class Quiz(models.Model):
     def __str__(self):
         return self.name
 
+
 class Question(models.Model):
     QUIZ_TYPES = (
         ('MCQ', 'Multiple Choice Question'),
@@ -170,6 +171,7 @@ class Question(models.Model):
 
     def __str__(self):
         return self.question_text
+
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
@@ -221,3 +223,12 @@ class OtherGrade(models.Model):
 
     class Meta:
         unique_together = ('student', 'name')
+
+class Certificate(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    certificate_image = models.ImageField(upload_to='certificates/', null=True, blank=True)
+
+
+    def __str__(self):
+        return f"Certificate for {self.user.full_name} - {self.course.title}"

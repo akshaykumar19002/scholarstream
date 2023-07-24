@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+import cv2
+
 
 from course.models import Course
 
