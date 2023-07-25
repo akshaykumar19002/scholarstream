@@ -1,41 +1,45 @@
-
-
 import os
 import cv2
-from django.conf import settings
-from Certificates.models import Certificate
+from datetime import datetime
 
-def generate_certificate_image(name):
-    template_path = os.path.join(settings.STATIC_ROOT, 'static/images/certificate-template.jpg')
-    output_folder = os.path.join(settings.MEDIA_ROOT, 'generated-certificates')
+def generate_certificate_image(name, course_name, certificate_id):
+    template_path = "certificate-template.jpg"
+    output_folder = "generated-certificates/"
     os.makedirs(output_folder, exist_ok=True)
 
     certificate_image = cv2.imread(template_path)
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 5
-    font_thickness = 10
-    text_color = (0, 0, 0)
+    font_scale = 1.2
+    font_thickness = 2
+    text_color = (0, 0, 0) 
+
+    (name_width, name_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
+    name_position_x = int((certificate_image.shape[1] - name_width) / 2)
+    name_position_y = int(certificate_image.shape[0] * 0.4)
 
 
-    (text_width, text_height), _ = cv2.getTextSize(name, font, font_scale, font_thickness)
-    position_x = int((certificate_image.shape[1] - text_width) / 2)
-    position_y = int((certificate_image.shape[0] + text_height) / 2)
-
-
-    cv2.putText(certificate_image, name, (position_x, position_y), font, font_scale, text_color, font_thickness,
+    cv2.putText(certificate_image, name, (name_position_x, name_position_y), font, font_scale, text_color, font_thickness,
                 cv2.LINE_AA)
 
-    output_path = os.path.join(output_folder, f"{name}.jpg")
+
+    (course_width, course_height), _ = cv2.getTextSize(course_name, font, font_scale, font_thickness)
+    course_position_x = int((certificate_image.shape[1] - course_width) / 2)
+    course_position_y = int(certificate_image.shape[0] * 0.6)
+
+
+    cv2.putText(certificate_image, course_name, (course_position_x, course_position_y), font, font_scale, text_color, font_thickness,
+                cv2.LINE_AA)
+
+
+    certificate_id_date = f"Certificate ID: {certificate_id} - {datetime.now().strftime('%Y-%m-%d')}"
+    (id_date_width, id_date_height), _ = cv2.getTextSize(certificate_id_date, font, 0.6, font_thickness)
+    id_date_position_x = int((certificate_image.shape[1] - id_date_width) / 2)
+    id_date_position_y = int(certificate_image.shape[0] * 0.9)
+
+
+    cv2.putText(certificate_image, certificate_id_date, (id_date_position_x, id_date_position_y), font, 0.6, text_color, font_thickness,
+                cv2.LINE_AA)
+
+    output_path = os.path.join(output_folder, f"{name}_certificate.jpg")
     cv2.imwrite(output_path, certificate_image)
-    return output_path
-
-
-def generate_certificate(user, course):
-
-    if user.is_subscribed:
-
-        certificate_image_path = generate_certificate_image(user.full_name)
-
-
-        certificate = Certificate(user=user, course=course, certificate_image=certificate_image_path)
-        certificate.save()
+    print(f"Certificate generated for {name} - Certificate ID: {certificate_id} - Date: {datetime.now().strftime('%Y-%m-%d')}")
