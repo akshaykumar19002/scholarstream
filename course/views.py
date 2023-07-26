@@ -16,7 +16,8 @@ from django.core.files import File
 from .forms import *
 from .models import *
 from cart.cart import Cart
-from .utils import generate_certificate_image
+from course.utils import generate_certificate_image
+from payment.utils import check_if_user_has_subscription
 
 import json
 import uuid
@@ -40,7 +41,7 @@ def add_course(request):
         if form.is_valid():
             form.save()
             user.courses.add(Course.objects.last())
-            return redirect('course:list')  # replace 'courses' with the name of your courses listing page
+            return redirect('course:list')
         else:
             print(form.errors)
             return render(request, 'course/add_course.html', {'form': form})
@@ -777,7 +778,6 @@ def download_sample_file(request, course_id):
 
 @login_required(login_url='login')
 def download_course_content(request, course_id, lesson_id=None):
-    # Creating temporary directories
     s3_client = boto3.client('s3')
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
 
@@ -917,10 +917,11 @@ def delete_lesson(request, course_id, lesson_id):
 @login_required(login_url='login')
 def view_certificates(request, user_id):
     user = get_object_or_404(get_user_model(), id=user_id)
+    hasSubscription = check_if_user_has_subscription(user)
     if request.user.user_type == 'I':
         return redirect('forbidden')
     certificates = Certificate.objects.filter(student=user)
-    return render(request, 'course/certificate/view_certificates.html', {'certificates': certificates})
+    return render(request, 'course/certificate/view_certificates.html', {'certificates': certificates, 'hasSubscription': hasSubscription})
 
 
 @login_required(login_url='login')
@@ -935,12 +936,15 @@ def generate_certificate(request, course_id, student_id=None):
     if request.user.user_type != 'I':
         return redirect('forbidden')
     for student in students:
+        if not check_if_user_has_subscription(student):
+            continue;            
         certificate = Certificate.objects.filter(course=course, student=student).first()
         if certificate:
             continue
-        cert_path = generate_certificate_image(student.get_full_name(), course.name)
+        certificate_id = str(uuid.uuid4().hex)
+        cert_path = generate_certificate_image(student.get_full_name(), course.name, certificate_id, timezone.now())
         with open(cert_path, 'rb') as file:
-            certificate = Certificate(course=course, student=student, certificate_image=File(file))
+            certificate = Certificate(id=certificate_id, course=course, student=student, certificate_image=File(file))
             certificate.save()
         if os.path.exists(cert_path):
             os.remove(cert_path)
