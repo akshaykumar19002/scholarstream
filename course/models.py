@@ -23,6 +23,7 @@ class Lesson(models.Model):
 
 
 @deconstructible
+@deconstructible
 class PathAndRename(object):
     def __init__(self, sub_path):
         self.path = sub_path
@@ -31,10 +32,10 @@ class PathAndRename(object):
         ext = filename.split('.')[-1]
         filename = filename.split('.')[0]
         if instance.pk:
-            return filename
+            filename = f'{filename}_{instance.pk}'
         else:
-            filename = '{}_{}.{}'.format(filename, uuid.uuid4().hex, ext)
-        return os.path.join(self.path, filename)
+            filename = f'{filename}_{uuid.uuid4().hex}'
+        return os.path.join(self.path, f'{filename}.{ext}')
 
 
 class Content(models.Model):

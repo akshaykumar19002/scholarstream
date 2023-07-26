@@ -944,8 +944,10 @@ def generate_certificate(request, course_id, student_id=None):
         certificate_id = str(uuid.uuid4().hex)
         cert_path = generate_certificate_image(student.get_full_name(), course.name, certificate_id, timezone.now())
         with open(cert_path, 'rb') as file:
-            certificate = Certificate(id=certificate_id, course=course, student=student, certificate_image=File(file))
+            filename = os.path.basename(cert_path)
+            certificate = Certificate(id=certificate_id, course=course, student=student, certificate_image=File(file, name=filename))
             certificate.save()
+            print(cert_path, certificate.certificate_image.url, filename)
         if os.path.exists(cert_path):
             os.remove(cert_path)
     return redirect('course:list_students', course_id)
