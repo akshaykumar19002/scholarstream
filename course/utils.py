@@ -2,6 +2,7 @@ import os
 import cv2
 from PIL import Image, ImageDraw, ImageFont
 
+# ... other imports ...
 
 def generate_certificate_image(user, course, certificate_id, date):
     template_path = "certificate-template.jpg"
@@ -11,10 +12,10 @@ def generate_certificate_image(user, course, certificate_id, date):
     certificate_image = Image.open(template_path)
     draw = ImageDraw.Draw(certificate_image)
 
-    font_path = "path_to_your_font_file.ttf"  # Replace with the path to the font file you want to use
-    font_size_name = 50
-    font_size_course = 40
-    font_size_id_date = 12
+    font_path = "Poppins-Light.ttf"
+    font_size_name = 80
+    font_size_course = 100
+    font_size_id_date = 20
 
     font_name = ImageFont.truetype(font_path, font_size_name)
     font_course = ImageFont.truetype(font_path, font_size_course)
@@ -27,7 +28,7 @@ def generate_certificate_image(user, course, certificate_id, date):
     position_x_id_date = int(img_width / 2)
     position_y_name = 700
     position_y_course = 800
-    position_y_id_date = img_height - 50
+    position_y_id_date = 2491
 
     draw.text((position_x_name, position_y_name), user.full_name, fill=(128, 0, 0), font=font_name, anchor="mm")
 
