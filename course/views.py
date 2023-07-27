@@ -132,7 +132,7 @@ class AddLesson(LoginRequiredMixin, View):
         if form.is_valid():
             new_lesson = Lesson(course=course, title=form.cleaned_data['title'])
             new_lesson.save()
-            return redirect('course:list_lessons', pk=course_id)
+            return redirect('course:list_lessons', course_id=course_id)
         else:
             return render(request, 'course/lesson/add_lesson.html', {'form': form, 'course': course})
 
@@ -222,8 +222,9 @@ def view_content(request, content_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     content = get_object_or_404(Content, id=content_id)
     course = content.lesson.course
-    content.viewed_by.add(user)
-    update_progress(user, content.lesson)
+    if request.user.user_type == 'S':
+        content.viewed_by.add(user)
+        update_progress(user, content.lesson)
     return render(request, 'course/content/view_content.html', {'content': content, 'course': course})
 
 
@@ -951,3 +952,27 @@ def generate_certificate(request, course_id, student_id=None):
         if os.path.exists(cert_path):
             os.remove(cert_path)
     return redirect('course:list_students', course_id)
+
+
+@login_required(login_url='login')
+def publish_content(request, course_id, content_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = get_object_or_404(get_user_model(), id=request.user.id)
+    content = get_object_or_404(Content, id=content_id)
+    if user.user_type != 'I':
+        return redirect('forbidden')
+    content.is_published = True
+    content.save()
+    return  redirect('course:list_lessons', course_id=course.id)
+
+
+@login_required(login_url='login')
+def hide_content(request, course_id, content_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = get_object_or_404(get_user_model(), id=request.user.id)
+    content = get_object_or_404(Content, id=content_id)
+    if user.user_type != 'I':
+        return redirect('forbidden')
+    content.is_published = False
+    content.save()
+    return  redirect('course:list_lessons', course_id=course.id)

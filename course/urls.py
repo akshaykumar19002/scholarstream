@@ -22,7 +22,9 @@ urlpatterns = [
          name='download_lesson_content'),
     path('<int:course_id>/lesson/<int:lesson_id>/delete/', views.delete_lesson, name='delete_lesson'),
     path('<int:course_id>/content/<int:content_id>/delete/', views.delete_content, name='delete_content'),
-
+    path('<int:course_id>/content/<int:content_id>/publish/', views.publish_content, name='publish_content'),
+    path('<int:course_id>/content/<int:content_id>/hide/', views.hide_content, name='hide_content'),
+    
     path('<int:course_id>/create_assignment/', views.create_assignment, name='create_assignment'),
     path('<int:course_id>/assignments/', views.list_assignments, name='list_assignments'),
     path('<int:course_id>/assignment/<int:assignment_id>/', views.view_assignment, name='view_assignment'),

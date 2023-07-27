@@ -75,12 +75,14 @@
                                         {% endif %}
                                     </div>
                                 </h2>
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;"
-                                         aria-valuenow="{{ progress }}" aria-valuemin="0"
-                                         aria-valuemax="100">{{ progress }}%
+                                {% if user.user_type == 'S' %}
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;"
+                                            aria-valuenow="{{ progress }}" aria-valuemin="0"
+                                            aria-valuemax="100">{{ progress }}%
+                                        </div>
                                     </div>
-                                </div>
+                                {% endif %}
                                 {% if user.is_authenticated and user.user_type == 'I' %}
                                     <div class="row">
                                         <a href="{% url 'course:add_content' course_id=course.id lesson_id=lesson.id %}"
@@ -95,23 +97,49 @@
                                             <p>No content available</p>
                                         {% endif %}
                                         {% for content, viewed in contents %}
-                                            <a class="content-link {% if viewed %}viewed{% endif %}"
-                                               href="{% url 'course:view_content' content_id=content.id %}">
-                                                <div class="card {% if viewed %}bg-success{% else %}bg-secondary{% endif %} text-white text-center mb-4">
-                                                    <div class="card-body">
-                                                        <div class="d-flex justify-content-between">
-                                                        <h5 class="text-center card-title">{{ content.title }}</h5>
-                                                        {% if viewed %}
-                                                            <span class="badge bg-light text-dark">Completed</span>
-                                                        {% endif %}
-                                                        {% if user.user_type == 'I' %}
-                                                            <a href="{% url 'course:delete_content' course.id content.id %}"
-                                                                class="btn btn-danger m-2"><i class="fa fa-trash"></i></a>
-                                                        {% endif %}
+                                            {% if user.user_type == 'I' %}
+                                                    <div class="card bg-secondary text-white text-center mb-4">
+                                                        <div class="card-body">
+                                                            <div class="row">
+                                                                <div class="col-md-3">
+                                                                    <a class="content-link" href="{% url 'course:view_content' content_id=content.id %}">
+                                                                        <h5 class="">{{ content.title }}</h5></a>
+                                                                    {% if content.is_published %}
+                                                                        <span class="badge bg-light text-dark">Published</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-light text-dark">Unpublished</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="col-md-9">
+                                                                    <a href="{% url 'course:delete_content' course.id content.id %}"
+                                                                    class="btn btn-danger m-2 float-end"><i class="fa fa-trash"></i></a>
+                                                                    {% if content.is_published %}
+                                                                        <a href="{% url 'course:hide_content' course.id content.id %}"
+                                                                            class="btn m-2 float-end"><i class="fa fa-eye-slash"></i></a>
+                                                                    {% else %}
+                                                                        <a href="{% url 'course:publish_content' course.id content.id %}"
+                                                                            class="btn m-2 float-end"><i class="fa fa-eye"></i></a>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </a>
+                                            
+                                            {% else %}
+                                                {% if content.is_published %}
+                                                    <a class="content-link {% if viewed %}viewed{% endif %}"
+                                                    href="{% url 'course:view_content' content_id=content.id %}">
+                                                        <div class="card {% if viewed %}bg-success{% else %}bg-secondary{% endif %} text-white text-center mb-4">
+                                                            <div class="card-body">
+                                                                <h5 class="text-center card-title">{{ content.title }}</h5>
+                                                                {% if viewed %}
+                                                                    <span class="badge bg-light text-dark">Completed</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
                                         {% endfor %}
                                     </div>
                                 </div>

@@ -19,10 +19,9 @@ class Course(models.Model):
 
 class Lesson(models.Model):
     course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=30)
 
 
-@deconstructible
 @deconstructible
 class PathAndRename(object):
     def __init__(self, sub_path):
@@ -59,7 +58,7 @@ class Content(models.Model):
 
     content_path = PathAndRename("contents/")
 
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     lesson = models.ForeignKey(Lesson, related_name='contents', on_delete=models.CASCADE)
     content_type = models.CharField(
         max_length=10,
@@ -77,6 +76,7 @@ class Content(models.Model):
     video_type = models.CharField(max_length=100, blank=True)
     other_content = models.FileField(upload_to=content_path, blank=True)
     viewed_by = models.ManyToManyField('user.UserModel', related_name='viewed_contents', blank=True)
+    is_published = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.audio_content:
@@ -108,12 +108,15 @@ class LessonProgress(models.Model):
 class Assignment(models.Model):
     course = models.ForeignKey(Course, related_name='assignments', on_delete=models.CASCADE)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_assignments', on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     description = models.TextField()
     due_date = models.DateTimeField()
     creation_date = models.DateTimeField(auto_now_add=True)
     attemptsAllowed = models.PositiveIntegerField(default=1)
     is_published = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['id']
 
 
 class AssignmentFile(models.Model):
@@ -148,7 +151,7 @@ class SubmissionFile(models.Model):
 class Quiz(models.Model):
     course = models.ForeignKey(Course, related_name='quizzes', on_delete=models.CASCADE)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_quizzes', on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=50)
     description = models.TextField()
     attempts_allowed = models.IntegerField(default=1)
     due_date = models.DateTimeField()
@@ -218,7 +221,7 @@ class OtherGrade(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField()
 
