@@ -41,7 +41,7 @@
         {% for assignment, progress in assignments.items %}
             <tr>
                 <td>Assignment</td>
-                <td>{{ assignment.title }}</a></td>
+                <td>{{ assignment.title }}</td>
                 <td>{{ assignment.description }}</td>
                 <td>{{ assignment.due_date }}</td>
                 {% if progress.submission.submission_date %}
@@ -63,7 +63,7 @@
         {% for quiz, progress in quizzes.items %}
             <tr>
                 <td>Quiz</td>
-                <td>{{ quiz.name }}</a></td>
+                <td>{{ quiz.name }}</td>
                 <td>{{ quiz.description }}</td>
                 <td>{{ quiz.due_date }}</td>
                 {% if progress.created_at %}
@@ -85,7 +85,7 @@
         {% for otherGrade in otherGrades %}
             <tr>
                 <td>Extra</td>
-                <td>{{ otherGrade.name }}</a></td>
+                <td>{{ otherGrade.name }}</td>
                 <td>{{ otherGrade.description }}</td>
                 <td> - </td>
                 <td>{{ otherGrade.created_at }}</td>

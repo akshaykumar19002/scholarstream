@@ -597,7 +597,12 @@ def attempt_quiz(request, course_id, quiz_id):
         return JsonResponse({'message': 'Quiz submitted successfully', 'total_score': total_score}, status=200)
     else:
         form = QuizAttemptForm(initial={'quiz': quiz, 'user': user})
-        return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course})
+        attempt = QuizProgress.objects.filter(student=user, quiz=quiz).count()
+        if attempt == 1 or quiz.due_date < timezone.now():
+            canAttempt = False
+        else:
+            canAttempt = True
+        return render(request, 'course/quiz/attempt_quiz.html', {'quiz': quiz, 'questions': questions, 'form': form, 'course': course,'canAttempt':canAttempt})
 
 
 @login_required(login_url='login')
@@ -708,8 +713,12 @@ def list_grades(request, course_id):
         otherGrades = {}
         assignments = Assignment.objects.filter(course = course)
         for quiz in Quiz.objects.filter(course = course):
-            quizzes[quiz] = QuizProgress.objects.filter(quiz = quiz)
-            
+            progresses = QuizProgress.objects.filter(quiz = quiz)
+            for progress in progresses:
+                attempts_q = QuizAttempt.objects.filter(user=progress.student)
+                progress.attempt = attempts_q
+            quizzes[quiz] = progresses
+
         oGrades = OtherGrade.objects.filter(course = course)
         for otherGrade in oGrades:
             otherGrades[otherGrade] = OtherGrade.objects.filter(name=otherGrade.name, course = course)
@@ -723,6 +732,21 @@ def list_grades(request, course_id):
             'quiz_grade_form': QuizGradeForm(),
         }
         return render(request, 'course/grade/list_grades_instructor.html', context)
+
+
+@login_required(login_url='login')
+def view_quiz_attempt(request, quiz_id, student_id):
+    student = get_object_or_404(get_user_model(), id=student_id)
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    questions = QuizAttempt.objects.filter(quiz=quiz, user=student)
+    questions_response = []
+    for question in questions:
+        question_response = dict()
+        question_response['question_text'] = question.question.question_text
+        question_response['answer_text'] = question.answer_text
+        questions_response.append(question_response)
+    return JsonResponse(questions_response, safe=False)
+
 
 
 @login_required(login_url='login')

@@ -11,6 +11,7 @@
         {% csrf_token %}
         {{ form.quiz.as_hidden }}
         {{ form.user.as_hidden }}
+        {% if canAttempt %}
         {% for question in questions%}
             <div class="question" data-id="{{ question.id }}" data-type="{{ question.question_type }}">
                 <h2>Question {{ forloop.counter }}: {{ question.question_text }}</h2>
@@ -38,6 +39,9 @@
             </div>
         {% endfor %}
         <input class="btn btn-primary" type="submit" value="Submit Quiz">
+    {% else %}
+            <p>Already attempted</p>
+        {% endif %}
     </form>
 </div>
 

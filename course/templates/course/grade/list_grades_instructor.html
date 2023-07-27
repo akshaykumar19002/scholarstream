@@ -3,6 +3,11 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
+<!-- Add the following script and link tags at the top of your template -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-KyZXEAg3QhqLMpG8r+8fhAXT14F0odMsTfZOzoXqtUI=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" integrity="sha512-UT3d/7Pp/Eq/r2hYr9e5h8Zo+epT/ho9VJsZvP90q+3C2AcJgN5YLMFJ+2VJzC5I8R73m5Db7ZW2b21Dk5Mg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<!-- ... (existing code) ... -->
 
 <style>
     table {
@@ -93,6 +98,7 @@
                                     {{ quiz_grade_form.total_score | as_crispy_field }}
                                     <input type="hidden" name="student_id" value="{{ student.id }}">
                                     <input type="hidden" name="quiz_id" value="{{ student.quiz.id }}">
+                                    <input class="btn btn-primary" type="button" name="view_attempt" value="view_attempt" onclick="openViewAttemptModal({{ quiz.id }}, {{ student.student.id }}, '{{ student.student }}', '{{ student.quiz.name }}', '{{ student.quiz.due_date }}', '{{ student.created_at }}', '{% url 'course:view_quiz_attempt' quiz.id student.student_id %}')">
                                     <button class="btn btn-primary" type="submit" name="quiz_grade_form">
                                         Add Grade
                                     </button>
@@ -151,4 +157,94 @@
 
 
 </div>
+    <!-- ... (existing code) ... -->
+<script>
+    function openViewAttemptModal(quiz_id, student_id, student, quizName, dueDate, submissionDate, url) {
+        // Get the modal element
+        const modal = document.getElementById('viewAttemptModal');
+
+        // Update the modal content with the data
+        const studentNameElement = modal.querySelector('#studentName');
+        const quizNameElement = modal.querySelector('#quizName');
+        const dueDateElement = modal.querySelector('#dueDate');
+        const submissionDateElement = modal.querySelector('#submissionDate');
+
+        studentNameElement.innerText = student;
+        quizNameElement.innerText = quizName;
+        dueDateElement.innerText = dueDate;
+        submissionDateElement.innerText = submissionDate;
+
+        //let url = '/quiz/' + quiz_id + '/' + student_id + '/view_attempt/'
+
+        /*fetch(url, {
+            'method': 'GET',
+        }).then(response => response.json())
+        .then(questions => {
+            const questionsDiv = $('div');
+            for (let question of questions) {
+                const questionDiv = $('div');
+                let question_text = question.question_text
+                let answer_text = question.answer_text
+                questionDiv.append($('<p>').text(question_text))
+                questionDiv.append($('<p>').text(answer_text))
+                questionDiv.append($('</div>'))
+                questionsDiv.append(questionDiv)
+            }
+            questionsDiv.append($('</div>'))
+            $('#responseDiv').append(questionsDiv)
+        }).catch((error) => {
+            console.log(error)
+            const questionsDiv = $('div');
+            questionsDiv.append($('<p>').text('Failed to get attemp'))
+            questionsDiv.append($('</div>'))
+            $('#responseDiv').append(questionsDiv)
+        });*/
+
+
+
+        // Show the modal
+        $(modal).modal('show');
+    }
+
+    // ... (existing code) ...
+
+    function closeViewAttemptModal() {
+        // Get the modal element
+        const modal = document.getElementById('viewAttemptModal');
+
+        // Hide the modal
+        $(modal).modal('hide');
+    }
+
+
+</script>
+<!-- ... (existing code) ... -->
+
+<!-- Modal -->
+<div class="modal fade" id="viewAttemptModal" tabindex="-1" role="dialog" aria-labelledby="viewAttemptModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewAttemptModalLabel">View Attempt Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Student Name:</strong> <span id="studentName"></span></p>
+                <p><strong>Quiz Name:</strong> <span id="quizName"></span></p>
+                <p><strong>Due Date:</strong> <span id="dueDate"></span></p>
+                <p><strong>Submission Date:</strong> <span id="submissionDate"></span></p>
+                <div id="#responseDiv"></div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeViewAttemptModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ... (existing code) ... -->
+
 {% endblock content %}

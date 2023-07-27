@@ -39,6 +39,7 @@ urlpatterns = [
     path('<int:course_id>/quiz/<int:quiz_id>/unpublish/', views.hide_quiz, name='hide_quiz'),
     path('<int:course_id>/quiz/<int:quiz_id>/attempt', views.attempt_quiz, name='attempt_quiz'),
     path('<int:course_id>/quiz/<int:quiz_id>/view_attempts', views.view_attempts, name='view_attempts'),
+    path('quiz/<int:quiz_id>/<int:student_id>/view_attempt', views.view_quiz_attempt, name='view_quiz_attempt'),
     
     path('<int:course_id>/progress/', views.view_course_progress, name='progress'),
     path('<int:course_id>/grades/', views.list_grades, name='grades'),
