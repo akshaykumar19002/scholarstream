@@ -7,7 +7,7 @@ from django.conf import settings
 
 
 class Course(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=40)
     description = models.TextField()
     thumbnail = models.ImageField(upload_to='course-thumbnails/')
     price = models.IntegerField(default=0)
@@ -15,7 +15,7 @@ class Course(models.Model):
 
     def __str__(self):
         return self.name
-
+    
 
 class Lesson(models.Model):
     course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)

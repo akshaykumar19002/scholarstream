@@ -333,6 +333,18 @@ def view_assignment(request, course_id, assignment_id):
             file_form = SubmissionFileForm(request.POST, request.FILES)
 
             if form.is_valid() and file_form.is_valid():
+                if form.cleaned_data['content'] == '' and len(file_form.cleaned_data['file_field']) == 0:
+                    context = {
+                        'form': form,
+                        'file_form': file_form,
+                        'errors': 'Either content or file must be provided.',
+                        'course': course,
+                        'assignment': assignment,
+                        'submissions': submissions,
+                        'current_time': timezone.now(),
+                        'grade_form': AssignmentGradeForm() if request.user.user_type == 'I' else None
+                    }
+                    return render(request, 'course/assignment/view_assignment.html', context)
                 submission = form.save(commit=False)
                 submission.assignment = assignment
                 submission.student = user
@@ -718,7 +730,15 @@ def list_grades(request, course_id):
                     quizProgress.save()
                 else:
                     print(quiz_grade_form.errors)
-
+                    context = {
+                        'course': course,
+                        'assignments': assignments,
+                        'quizzes': quizzes,
+                        'otherGrades': otherGrades,
+                        'assignment_grade_form': AssignmentGradeForm(),
+                        'quiz_grade_form': QuizGradeForm(),
+                    }
+                    return render(request, 'course/grade/list_grades_instructor.html', context)
         quizzes = {}
         otherGrades = {}
         assignments = Assignment.objects.filter(course = course)
@@ -758,7 +778,6 @@ def view_quiz_attempt(request, quiz_id, student_id):
     return JsonResponse(questions_response, safe=False)
 
 
-
 @login_required(login_url='login')
 def create_extra_grade(request, course_id):
     course = get_object_or_404(Course, id=course_id)
@@ -780,7 +799,8 @@ def create_extra_grade(request, course_id):
                     grade.save()
 
             return redirect('course:grades', course_id=course.id)
-
+        else:
+            return render(request, 'course/grade/create_extra_grade.html', {'course': course, 'form': form})
     form = ExtraGradeForm()
     return render(request, 'course/grade/create_extra_grade.html', {'course': course, 'form': form})
 
@@ -792,11 +812,11 @@ def download_sample_file(request, course_id):
     response['Content-Disposition'] = 'attachment; filename="sample_grades.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['student_id', 'grade'])
+    writer.writerow(['Student ID', 'Student Name', 'grade'])
 
-    students = User.objects.filter(courses__id=course_id)
+    students = User.objects.filter(courses__id=course_id, user_type='S')
     for student in students:
-        writer.writerow([student.id, ''])
+        writer.writerow([student.id, student.get_full_name(), ''])
     return response
 
 

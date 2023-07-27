@@ -50,6 +50,14 @@ class UpdateUsernameForm(forms.ModelForm):
         help_texts = {
             'usernameHelpBlock': 'Enter your new username.',
         }
+        
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if UserModel.objects.filter(username=username).exists():
+            raise forms.ValidationError('Username already exists')
+        if len(username) > 150:
+            raise forms.ValidationError('Username is too long')
+        return username
 
 
 class ChangePasswordForm(forms.Form):
@@ -73,6 +81,7 @@ class ChangePasswordForm(forms.Form):
 
         if new_password != confirm_password:
             raise forms.ValidationError("New password and confirm password must match.")
+        return cleaned_data
 
 
 class AddUpdateAddressForm(forms.ModelForm):
@@ -81,11 +90,6 @@ class AddUpdateAddressForm(forms.ModelForm):
         exclude = ['user']
 
         widgets = {
-            'full_name': TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Full name',
-                'aria-describedBy': 'full_nameHelpBlock'
-            }),
             'email': TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Email address',
@@ -118,7 +122,6 @@ class AddUpdateAddressForm(forms.ModelForm):
             }),
         }
         labels = {
-            'full_name': 'Full Name',
             'email': 'Email Address',
             'address1': 'Address Line 1',
             'address2': 'Address Line 2',
@@ -127,7 +130,6 @@ class AddUpdateAddressForm(forms.ModelForm):
             'zipcode': 'Zipcode'
         }
         help_texts = {
-            'full_nameHelpBlock': 'Enter your full name.',
             'emailHelpBlock': 'Enter your email address.',
             'address1HelpBlock': 'Enter your address.',
             'address2HelpBlock': 'Enter your address.',
@@ -135,3 +137,35 @@ class AddUpdateAddressForm(forms.ModelForm):
             'stateHelpBlock': 'Enter your state.',
             'zipcodeHelpBlock': 'Enter your zipcode.'
         }
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if len(email) < 5:
+            raise forms.ValidationError('Email is too short')
+        return email
+    
+    def clean_address1(self):
+        address1 = self.cleaned_data.get('address1')
+        if len(address1) < 3:
+            raise forms.ValidationError('Address is too short.')
+        return address1
+    
+    def clean_address2(self):
+        address2 = self.cleaned_data.get('address2')
+        if address2 != None and address2 != '':
+            if len(address2) < 3:
+                raise forms.ValidationError('Address is too short.')
+        return address2
+    
+    def clean_city(self):
+        city = self.cleaned_data.get('city')
+        if len(city) < 3:
+            raise forms.ValidationError('City is too short.')
+        return city
+    
+    def clean_state(self):
+        state = self.cleaned_data.get('state')
+        if state != None or state != '':
+            if len(state) < 2:
+                raise forms.ValidationError('State is too short.')
+        return state

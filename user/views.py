@@ -122,30 +122,58 @@ def user_profile(request):
 
     username_form = UpdateUsernameForm(request.POST or None, instance=user)
     password_form = ChangePasswordForm(request.POST or None)
-    address_form = AddUpdateAddressForm(request.POST or None, instance=address)
+    address_form = AddUpdateAddressForm(request.POST or None, address.__dict__ if address else None)
 
     print(request.POST)
     if request.method == 'POST':
         # Update username form
-        if 'username_form' in request.POST and username_form.is_valid():
-            username_form.save()
+        if 'username_form' in request.POST:
+            if username_form.is_valid():
+                username_form.save()
+            else:
+                context = {
+                    'username_form': username_form,
+                    'password_form': password_form,
+                    'address_form': address_form
+                }
+
+                return render(request, 'user/profile.html', context)
+
 
         # Change password form
-        elif 'password_form' in request.POST and password_form.is_valid():
-            current_password = password_form.cleaned_data['currentPassword']
-            if user.check_password(current_password):
-                new_password = password_form.cleaned_data['newPassword']
-                user.set_password(new_password)
-                user.save()
-                user_logout(request)
+        elif 'password_form' in request.POST:
+            if password_form.is_valid():
+                current_password = password_form.cleaned_data['currentPassword']
+                if user.check_password(current_password):
+                    new_password = password_form.cleaned_data['newPassword']
+                    user.set_password(new_password)
+                    user.save()
+                    user_logout(request)
+                else:
+                    password_form.add_error('currentPassword', 'Current password is not correct')
             else:
-                password_form.add_error('currentPassword', 'Current password is not correct')
+                context = {
+                    'username_form': username_form,
+                    'password_form': password_form,
+                    'address_form': address_form
+                }
+
+                return render(request, 'user/profile.html', context)
 
         # Add/Update address form
-        elif 'address_form' in request.POST and address_form.is_valid():
-            address = address_form.save(commit=False)
-            address.user = user
-            address.save()
+        elif 'address_form' in request.POST:
+            if address_form.is_valid():
+                address = address_form.save(commit=False)
+                address.user = user
+                address.save()
+            else:
+                context = {
+                    'username_form': username_form,
+                    'password_form': password_form,
+                    'address_form': address_form
+                }
+
+                return render(request, 'user/profile.html', context)
 
     context = {
         'username_form': username_form,

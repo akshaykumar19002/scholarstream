@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 
 from .models import *
 from cart.cart import Cart
-from .forms import BillingForm
+from user.forms import AddUpdateAddressForm
 from payment.utils import check_if_user_has_subscription, convert_price
 
 from paypal.standard.forms import PayPalPaymentsForm
@@ -16,13 +16,13 @@ from paypal.standard.forms import PayPalPaymentsForm
 
 @login_required(login_url='login')
 def checkout(request):
-    form = BillingForm()
+    form = AddUpdateAddressForm()
     cart = Cart(request)
     if request.user.user_type == 'I':
         return redirect('forbidden')
     try:
         shipping_address = BillingAddress.objects.get(user=request.user.id)
-        form = BillingForm(shipping_address.__dict__)
+        form = AddUpdateAddressForm(shipping_address.__dict__)
         return render(request, 'payment/checkout.html', {'shipping_address': shipping_address, 'has_subscription': check_if_user_has_subscription(request.user), 'form': form})
     except:
         return render(request, 'payment/checkout.html',  {'has_subscription': check_if_user_has_subscription(request.user), 'form': form})

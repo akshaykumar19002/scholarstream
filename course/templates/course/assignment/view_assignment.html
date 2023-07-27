@@ -55,10 +55,14 @@
                     <td>{{ submission.submission_date|date:"F j, Y, P" }}</td>
                 {% endlocaltime %}
                 <td style="width: 25%;">
+                    {% if submission.content|length != 0 %}
                     <div>
                         <a class="btn btn-primary" href="{% url 'course:view_submission' course.id submission.id%}">View Content</a>
                         <a class="btn btn-primary" href="{% url 'course:download_submission_content' course.id submission.id%}"><i class="fa fa-download"></i></a>
                     </div>
+                    {% else %}
+                        <p>No content submitted</p>
+                    {% endif %}
                 </td>
                 <td>
                     {% for file in submission.files.all %}
@@ -104,6 +108,9 @@
                 {% csrf_token %}
                 {{ form|crispy }}
                 {{ file_form|crispy }}
+                {% if errors %}
+                    <p class="text-danger">{{ errors }}</p>
+                {% endif %}
                 <button class="btn btn-primary" type="submit">Submit Assignment</button>
             </form>
         {% else %}

@@ -3,6 +3,7 @@ from django.forms import ModelForm, TextInput, NumberInput, FileInput, Textarea,
 from django import forms
 from .models import *
 from django.core.exceptions import ValidationError
+from datetime import datetime
 
 class CourseForm(ModelForm):
     class Meta:
@@ -39,6 +40,24 @@ class CourseForm(ModelForm):
             'price': 'Enter the price of the course.',
             'thumbnail': 'Upload a thumbnail for the course.',
         }
+        
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if len(name) < 5:
+            raise ValidationError('Name should be at least 5 characters long.')
+        return name
+        
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price < 0:
+            raise ValidationError('Price cannot be negative.')
+        return price
+        
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if len(description) < 10:
+            raise ValidationError('Description should be at least 10 characters long.')
+        return description
 
 
 class LessonForm(ModelForm):
@@ -58,7 +77,12 @@ class LessonForm(ModelForm):
         help_texts = {
             'titleHelpBlock': 'Enter the title of the lesson.',
         }
-        
+    
+    def clean_title(self):
+        title = self.cleaned_data['title']
+        if len(title) < 5:
+            raise ValidationError('Title should be at least 5 characters long.')
+        return title
 
 def validate_file_extension(value):
     import os
@@ -135,6 +159,31 @@ class AssignmentForm(forms.ModelForm):
             'due_date': 'Enter a due date for your assignment.',
             'attemptsAllowed': 'Enter the number of attempts allowed for your assignment.',
         }
+    
+    def clean_title(self):
+        title = self.cleaned_data['title']
+        if len(title) < 5:
+            raise ValidationError('Title should be at least 5 characters long.')
+        return title
+        
+    def clean_description(self):
+        description = self.cleaned_data['description']
+        if len(description) < 10:
+            raise ValidationError('Description should be at least 10 characters long.')
+        return description
+        
+    def clean_due_date(self):
+        due_date = self.cleaned_data['due_date']
+        current_time = datetime.now().astimezone(due_date.tzinfo)
+        if due_date < current_time:
+            raise ValidationError('Due date cannot be in the past.')
+        return due_date
+    
+    def clean_attemptsAllowed(self):
+        attemptsAllowed = self.cleaned_data['attemptsAllowed']
+        if attemptsAllowed < 1:
+            raise ValidationError('Number of attempts allowed cannot be less than 1.')
+        return attemptsAllowed
 
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
@@ -207,6 +256,11 @@ class AssignmentGradeForm(forms.ModelForm):
             'grade': '',
         }
     
+    def clean_grade(self):
+        grade = self.cleaned_data['grade']
+        if grade < 0:
+            raise ValidationError('Grade cannot be negative.')
+        return grade
     
 class QuizGradeForm(forms.ModelForm):
     class Meta:
@@ -216,6 +270,12 @@ class QuizGradeForm(forms.ModelForm):
         labels = {
             'total_score': '',
         }
+        
+    def clean_total_score(self):
+        total_score = self.cleaned_data['total_score']
+        if total_score < 0:
+            raise ValidationError('Total score cannot be negative.')
+        return total_score
 
 
 class ExtraGradeForm(forms.ModelForm):
@@ -224,3 +284,22 @@ class ExtraGradeForm(forms.ModelForm):
         model = OtherGrade
         fields = ['name', 'description', 'grades']
         
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if len(name) < 5:
+            raise ValidationError('Name should be at least 5 characters long.')
+        return name
+    
+    def clean_description(self):
+        description = self.cleaned_data['description']
+        if len(description) < 10:
+            raise ValidationError('Description should be at least 10 characters long.')
+        return description
+    
+    def clean_grades(self):
+        grades = self.cleaned_data['grades']
+        if grades.size == 0:
+            raise ValidationError('File cannot be empty.')
+        if grades.size > 10000000:
+            raise ValidationError('File size cannot exceed 10MB.')
+        return grades
