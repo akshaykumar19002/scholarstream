@@ -4,6 +4,7 @@ from django.http import JsonResponse
 
 from .cart import Cart
 from course.models import Course
+from payment.utils import convert_price
 
 
 def cart_summary(request):
@@ -18,7 +19,8 @@ def cart_add(request):
         course_id = int(request.POST.get('course_id'))
         
         course = get_object_or_404(Course, id=course_id)
-        cart.add(course)
+        price, currency = convert_price(request, course.currency, course.price)
+        cart.add(course, price, currency)
 
         response = JsonResponse({'isSuccess': True})
         return response

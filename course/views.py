@@ -11,10 +11,13 @@ from django.db import models, transaction
 from django.http import FileResponse
 from datetime import datetime
 from django.utils import timezone
+from django.core.files import File
 
 from .forms import *
 from .models import *
 from cart.cart import Cart
+from course.utils import generate_certificate_image
+from payment.utils import check_if_user_has_subscription
 
 import json
 import uuid
@@ -38,7 +41,7 @@ def add_course(request):
         if form.is_valid():
             form.save()
             user.courses.add(Course.objects.last())
-            return redirect('course:list')  # replace 'courses' with the name of your courses listing page
+            return redirect('course:list')
         else:
             print(form.errors)
             return render(request, 'course/add_course.html', {'form': form})
@@ -50,15 +53,15 @@ def add_course(request):
 
 def list_course(request):
     if request.user.is_authenticated:
-        courses = Course.objects.filter(id__in = request.user.courses.all())
-        allcourses = Course.objects.all().exclude(id__in = courses)
+        courses = Course.objects.filter(id__in=request.user.courses.all())
+        allcourses = Course.objects.all().exclude(id__in=courses)
         coursesInCart = [item['course'].id for item in Cart(request)]
-        allcourses = allcourses.exclude(id__in = coursesInCart)
+        allcourses = allcourses.exclude(id__in=coursesInCart)
         return render(request, 'course/list_course.html', {'courses': courses, 'allcourses': allcourses})
     else:
         allcourses = Course.objects.all()
         coursesInCart = [item['course'].id for item in Cart(request)]
-        allcourses = allcourses.exclude(id__in = coursesInCart)
+        allcourses = allcourses.exclude(id__in=coursesInCart)
         return render(request, 'course/list_course.html', {'allcourses': allcourses})
 
 
@@ -109,8 +112,9 @@ def delete_course(request, pk):
         return redirect('course:list')
     return redirect('forbidden')
 
+
 class AddLesson(LoginRequiredMixin, View):
-    
+
     def get(self, request, course_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
@@ -118,7 +122,7 @@ class AddLesson(LoginRequiredMixin, View):
         course = get_object_or_404(Course, id=course_id)
         form = LessonForm()
         return render(request, 'course/lesson/add_lesson.html', {'form': form, 'course': course})
-    
+
     def post(self, request, course_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
@@ -128,7 +132,7 @@ class AddLesson(LoginRequiredMixin, View):
         if form.is_valid():
             new_lesson = Lesson(course=course, title=form.cleaned_data['title'])
             new_lesson.save()
-            return redirect('course:list_lessons', pk=course_id)
+            return redirect('course:list_lessons', course_id=course_id)
         else:
             return render(request, 'course/lesson/add_lesson.html', {'form': form, 'course': course})
 
@@ -182,9 +186,8 @@ def view_lesson(request, course_id, lesson_id):
     return render(request, 'course/lesson/list_lessons.html', context)
 
 
-
 class AddContent(LoginRequiredMixin, View):
-    
+
     def get(self, request, course_id, lesson_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
@@ -192,7 +195,7 @@ class AddContent(LoginRequiredMixin, View):
         form = ContentForm()
         course = get_object_or_404(Course, id=course_id)
         return render(request, 'course/content/add_content.html', {'form': form, 'course': course})
-    
+
     def post(self, request, course_id, lesson_id):
         user = get_object_or_404(get_user_model(), id=request.user.pk)
         if user.user_type != 'I':
@@ -203,7 +206,7 @@ class AddContent(LoginRequiredMixin, View):
         if form.is_valid():
             new_content = form.save(commit=False)
             new_content.lesson = lesson
-            
+
             max_order = lesson.contents.aggregate(models.Max('order'))['order__max']
             new_content.order = max_order + 1 if max_order is not None else 0
 
@@ -219,8 +222,9 @@ def view_content(request, content_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     content = get_object_or_404(Content, id=content_id)
     course = content.lesson.course
-    content.viewed_by.add(user)
-    update_progress(user, content.lesson)
+    if request.user.user_type == 'S':
+        content.viewed_by.add(user)
+        update_progress(user, content.lesson)
     return render(request, 'course/content/view_content.html', {'content': content, 'course': course})
 
 
@@ -246,7 +250,7 @@ def create_assignment(request, course_id):
     user = get_object_or_404(get_user_model(), id=request.user.pk)
     if user.user_type != 'I':
         return redirect('forbidden')
-    
+
     course = get_object_or_404(Course, id=course_id)
 
     if request.method == 'POST':
@@ -269,7 +273,8 @@ def create_assignment(request, course_id):
         form = AssignmentForm()
         file_form = AssignmentFileForm()
 
-    return render(request, 'course/assignment/add_assignment.html', {'form': form, 'file_form': file_form, 'course': course})
+    return render(request, 'course/assignment/add_assignment.html',
+                  {'form': form, 'file_form': file_form, 'course': course})
 
 
 @login_required(login_url='login')
@@ -285,7 +290,6 @@ def list_assignments(request, course_id):
         'assignments': assignments
     }
     return render(request, 'course/assignment/list_assignments.html', context)
-
 
 
 @login_required(login_url='login')
@@ -364,6 +368,7 @@ def view_assignment(request, course_id, assignment_id):
     }
     return render(request, 'course/assignment/view_assignment.html', context)
 
+
 def evaluate_assignment(request, grade):
     submission_id = request.POST.get('submission_id')
     student_id = request.POST.get('student_id')
@@ -378,6 +383,7 @@ def evaluate_assignment(request, grade):
     assignmentProgress.submission = submission
     assignmentProgress.is_complete = True
     assignmentProgress.save()
+
 
 @login_required(login_url='login')
 def view_assignment_submission(request, course_id, submission_id):
@@ -420,7 +426,8 @@ def hide_assignment(request, course_id, assignment_id):
 @login_required(login_url='login')
 def download_assignment_submission_content(request, course_id, submission_id):
     submission = get_object_or_404(AssignmentSubmission, id=submission_id)
-    filename = 'assignment_' + str(submission.assignment.id) + '_' + str(submission.id) + '_' + str(submission.student.id) + '_' + submission.student.first_name + '.txt'
+    filename = 'assignment_' + str(submission.assignment.id) + '_' + str(submission.id) + '_' + str(
+        submission.student.id) + '_' + submission.student.first_name + '.txt'
     file_like_object = io.BytesIO(submission.content.encode())
     file_wrapper = FileWrapper(file_like_object)
     response = HttpResponse(file_wrapper, content_type='text/plain')
@@ -493,6 +500,7 @@ def delete_quiz(request, course_id, quiz_id):
     quiz.delete()
     return redirect('course:list_quizzes', course_id=course_id)
 
+
 @login_required(login_url='login')
 def publish_quiz(request, course_id, quiz_id):
     if (request.user.user_type != 'I'):
@@ -501,6 +509,7 @@ def publish_quiz(request, course_id, quiz_id):
     quiz.is_published = True
     quiz.save()
     return redirect('course:list_quizzes', course_id=course_id)
+
 
 @login_required(login_url='login')
 def hide_quiz(request, course_id, quiz_id):
@@ -634,7 +643,7 @@ def get_user_course_progress(course, user):
             lesson.progress = None
         else:
             lesson.progress = progress[0]
-    
+
     assignments = course.assignments.all()
     for assignment in assignments:
         progress = AssignmentProgress.objects.filter(assignment=assignment, student=user)
@@ -642,7 +651,7 @@ def get_user_course_progress(course, user):
             assignment.prog = None
         else:
             assignment.prog = progress[0]
-    
+
     quizzes = course.quizzes.all()
     for quiz in quizzes:
         progress = QuizProgress.objects.filter(quiz=quiz, student=user)
@@ -650,7 +659,7 @@ def get_user_course_progress(course, user):
             quiz.progress = None
         else:
             quiz.progress = progress[0]
-    
+
     return {
         'course': course,
         'lessons': lessons,
@@ -658,16 +667,17 @@ def get_user_course_progress(course, user):
         'quizzes': quizzes,
     }
 
+
 def course_search(request, search_keyword):
     if request.user.is_authenticated:
-        courses = Course.objects.filter(name__icontains = search_keyword, id__in = request.user.courses.all())
-        allcourses = Course.objects.all().filter(~Q(id__in = courses), name__icontains = search_keyword)
+        courses = Course.objects.filter(name__icontains=search_keyword, id__in=request.user.courses.all())
+        allcourses = Course.objects.all().filter(~Q(id__in=courses), name__icontains=search_keyword)
         coursesInCart = [item['course'].id for item in Cart(request)]
-        allcourses = allcourses.exclude(id__in = coursesInCart)
+        allcourses = allcourses.exclude(id__in=coursesInCart)
         return render(request, 'course/list_course.html', {'courses': courses, 'allcourses': allcourses})
-    allcourses = Course.objects.filter(name__icontains = search_keyword)
+    allcourses = Course.objects.filter(name__icontains=search_keyword)
     coursesInCart = [item['course'].id for item in Cart(request)]
-    allcourses = allcourses.exclude(id__in = coursesInCart)
+    allcourses = allcourses.exclude(id__in=coursesInCart)
     return render(request, 'course/list_course.html', {'allcourses': allcourses})
 
 
@@ -675,7 +685,7 @@ def course_search(request, search_keyword):
 def list_grades(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     user = get_object_or_404(get_user_model(), id=request.user.pk)
-    
+
     if user.user_type == 'S':
         all_assignments = Assignment.objects.filter(course=course, progress__student=user)
         assignments = {}
@@ -693,7 +703,7 @@ def list_grades(request, course_id):
         }
         return render(request, 'course/grade/list_grades_student.html', context)
     else:
-        if request.method == 'POST':            
+        if request.method == 'POST':
             if 'quiz_grade_form' in request.POST:
                 quiz_grade_form = QuizGradeForm(request.POST)
                 student_id = request.POST.get('student_id')
@@ -701,9 +711,9 @@ def list_grades(request, course_id):
                 student = get_object_or_404(get_user_model(), id=student_id)
                 quiz = get_object_or_404(Quiz, id=quiz_id)
                 if quiz_grade_form.is_valid():
-                    quizProgress = QuizProgress.objects.filter(quiz = quiz).first()
+                    quizProgress = QuizProgress.objects.filter(quiz=quiz).first()
                     if quizProgress == None:
-                        quizProgress = QuizProgress(quiz = quiz, student = student)
+                        quizProgress = QuizProgress(quiz=quiz, student=student)
                     quizProgress.total_score = quiz_grade_form.cleaned_data['total_score']
                     quizProgress.save()
                 else:
@@ -721,8 +731,8 @@ def list_grades(request, course_id):
 
         oGrades = OtherGrade.objects.filter(course = course)
         for otherGrade in oGrades:
-            otherGrades[otherGrade] = OtherGrade.objects.filter(name=otherGrade.name, course = course)
-            
+            otherGrades[otherGrade] = OtherGrade.objects.filter(name=otherGrade.name, course=course)
+
         context = {
             'course': course,
             'assignments': assignments,
@@ -764,13 +774,13 @@ def create_extra_grade(request, course_id):
             with transaction.atomic():
                 for row in reader:
                     student = User.objects.get(pk=int(row['student_id']))
-                    grade = OtherGrade(student=student, grade=row['grade'], course=course, 
-                                       name=form.cleaned_data['name'], 
+                    grade = OtherGrade(student=student, grade=row['grade'], course=course,
+                                       name=form.cleaned_data['name'],
                                        description=form.cleaned_data['description'])
                     grade.save()
 
             return redirect('course:grades', course_id=course.id)
-        
+
     form = ExtraGradeForm()
     return render(request, 'course/grade/create_extra_grade.html', {'course': course, 'form': form})
 
@@ -792,10 +802,9 @@ def download_sample_file(request, course_id):
 
 @login_required(login_url='login')
 def download_course_content(request, course_id, lesson_id=None):
-    # Creating temporary directories
     s3_client = boto3.client('s3')
     bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    
+
     course = get_object_or_404(Course, id=course_id)
     lesson = get_object_or_404(Lesson, id=lesson_id) if lesson_id else None
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -806,7 +815,7 @@ def download_course_content(request, course_id, lesson_id=None):
         for lesson in lessons:  # Iterating over all lessons
             lesson_dir = os.path.join(tmp_dir, lesson.title)
             os.makedirs(lesson_dir)  # Creating directory for each lesson
-            
+
             for content in lesson.contents.all():
                 if content.content_type == Content.TEXT:
                     with open(os.path.join(lesson_dir, f'{content.title}.txt'), 'w') as f:
@@ -825,10 +834,12 @@ def download_course_content(request, course_id, lesson_id=None):
                         file_field = content.other_content
 
                     # Download the file from S3 to a temp file
-                    with tempfile.NamedTemporaryFile(suffix=os.path.splitext(file_field.name)[1], delete=True) as tmp_content:
+                    with tempfile.NamedTemporaryFile(suffix=os.path.splitext(file_field.name)[1],
+                                                     delete=True) as tmp_content:
                         s3_client.download_file(bucket_name, file_field.name, tmp_content.name)
                         # Copy the temp file to the lesson directory
-                        shutil.copy2(tmp_content.name, os.path.join(lesson_dir, content.title + os.path.splitext(file_field.name)[1]))
+                        shutil.copy2(tmp_content.name,
+                                     os.path.join(lesson_dir, content.title + os.path.splitext(file_field.name)[1]))
 
         # Creating a zip file
         tmp_file_path = os.path.join(tempfile.gettempdir(), f'tmp_{uuid.uuid4().hex}.zip')
@@ -854,7 +865,10 @@ def list_students(request, course_id):
     if user.user_type != 'I':
         return redirect('forbidden')
     students = get_user_model().objects.filter(courses__id=course_id, user_type='S')
-    return render(request, 'course/course_progress_instructor/list_students.html', {'students': students, 'course': course})
+    for student in students:
+        student.certificate = Certificate.objects.filter(student=student, course=course).first()
+    return render(request, 'course/course_progress_instructor/list_students.html',
+                  {'students': students, 'course': course})
 
 
 @login_required(login_url='login')
@@ -866,7 +880,6 @@ def view_user_grades(request, course_id, user_id):
         return redirect('forbidden')
     context = get_user_grades_for_instructor(course, student)
     return render(request, 'course/course_progress_instructor/view_user_grades.html', context)
-    
 
 
 @login_required(login_url='login')
@@ -881,19 +894,19 @@ def view_user_progress(request, course_id, user_id):
     return render(request, 'course/course_progress_instructor/view_user_progress.html', context)
 
 
-def get_user_grades_for_instructor(course, user):       
+def get_user_grades_for_instructor(course, user):
     assignments = {}
     quizzes = {}
     otherGrades = {}
-    for assignment in Assignment.objects.filter(course = course):
-        assignments[assignment] = AssignmentProgress.objects.filter(assignment = assignment, student=user).first()
-    for quiz in Quiz.objects.filter(course = course):
-        quizzes[quiz] = QuizProgress.objects.filter(quiz = quiz, student=user).first()
-        
-    oGrades = OtherGrade.objects.filter(course = course, student=user)
+    for assignment in Assignment.objects.filter(course=course):
+        assignments[assignment] = AssignmentProgress.objects.filter(assignment=assignment, student=user).first()
+    for quiz in Quiz.objects.filter(course=course):
+        quizzes[quiz] = QuizProgress.objects.filter(quiz=quiz, student=user).first()
+
+    oGrades = OtherGrade.objects.filter(course=course, student=user)
     for otherGrade in oGrades:
-        otherGrades[otherGrade] = OtherGrade.objects.filter(name=otherGrade.name, course = course, student=user)
-        
+        otherGrades[otherGrade] = OtherGrade.objects.filter(name=otherGrade.name, course=course, student=user)
+
     return {
         'course': course,
         'student': user,
@@ -923,3 +936,66 @@ def delete_lesson(request, course_id, lesson_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
     lesson.delete()
     return redirect('course:list_lessons', course_id=course.id)
+
+
+@login_required(login_url='login')
+def view_certificates(request, user_id):
+    user = get_object_or_404(get_user_model(), id=user_id)
+    hasSubscription = check_if_user_has_subscription(user)
+    if request.user.user_type == 'I':
+        return redirect('forbidden')
+    certificates = Certificate.objects.filter(student=user)
+    return render(request, 'course/certificate/view_certificates.html', {'certificates': certificates, 'hasSubscription': hasSubscription})
+
+
+@login_required(login_url='login')
+def generate_certificate(request, course_id, student_id=None):
+    course = get_object_or_404(Course, id=course_id)
+    if student_id:
+        student = get_object_or_404(get_user_model(), id=student_id)
+        students = [student]
+    else:
+        student = None
+        students = get_user_model().objects.filter(courses__id=course_id, user_type='S')
+    if request.user.user_type != 'I':
+        return redirect('forbidden')
+    for student in students:
+        if not check_if_user_has_subscription(student):
+            continue;
+        certificate = Certificate.objects.filter(course=course, student=student).first()
+        if certificate:
+            continue
+        certificate_id = str(uuid.uuid4().hex)
+        cert_path = generate_certificate_image(student.get_full_name(), course.name, certificate_id, timezone.now())
+        with open(cert_path, 'rb') as file:
+            filename = os.path.basename(cert_path)
+            certificate = Certificate(id=certificate_id, course=course, student=student, certificate_image=File(file, name=filename))
+            certificate.save()
+            print(cert_path, certificate.certificate_image.url, filename)
+        if os.path.exists(cert_path):
+            os.remove(cert_path)
+    return redirect('course:list_students', course_id)
+
+
+@login_required(login_url='login')
+def publish_content(request, course_id, content_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = get_object_or_404(get_user_model(), id=request.user.id)
+    content = get_object_or_404(Content, id=content_id)
+    if user.user_type != 'I':
+        return redirect('forbidden')
+    content.is_published = True
+    content.save()
+    return  redirect('course:list_lessons', course_id=course.id)
+
+
+@login_required(login_url='login')
+def hide_content(request, course_id, content_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = get_object_or_404(get_user_model(), id=request.user.id)
+    content = get_object_or_404(Content, id=content_id)
+    if user.user_type != 'I':
+        return redirect('forbidden')
+    content.is_published = False
+    content.save()
+    return  redirect('course:list_lessons', course_id=course.id)

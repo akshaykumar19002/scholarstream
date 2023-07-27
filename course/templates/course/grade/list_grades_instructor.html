@@ -15,7 +15,6 @@
         border-collapse: collapse;
     }
     th, td {
-        border: 1px solid black;
         padding: 15px;
         text-align: left;
     }
@@ -39,7 +38,7 @@
     
     {% for assignment  in assignments %}
         <h4> {{ assignment.title }} </h4>
-        <table>
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Type</th>
@@ -70,7 +69,7 @@
 
     {% for quiz, students  in quizzes.items %}
         <h4> {{ quiz.name }} </h4>
-        <table>
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Type</th>
@@ -119,7 +118,7 @@
 
     {% for otherGrade, students  in otherGrades.items %}
         <h4> {{ otherGrade.name }} </h4>
-        <table>
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Type</th>

@@ -67,6 +67,11 @@
                             <div class="card-body">
                                 <h5 class="card-title">{{ course.name }}</h5>
                                 <p class="card-text">{{ course.description }}</p>
+                                {% if course.price == 0 %}
+                                    <p class="card-text">Price: Free</p>
+                                {% else %}
+                                    <p class="card-text">Price: {{ course.currency }} {{ course.price }}</p>
+                                {% endif %}
                                 <button type="button" id="add-button" value="{{ course.id }}" class="btn btn-secondary btn-sm">
                                     Add to cart
                                 </button>

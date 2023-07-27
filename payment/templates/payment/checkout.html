@@ -19,22 +19,61 @@
     <br>
     <div class="container bg-white shadow-md p-5" style="width:500px; border-radius:20px;">
         <form id="form" method="post" action="{% url 'payment:complete-order' %}" {% if cart.get_total_price != 0 or has_subscription %}onsubmit="event.preventDefault();"{% endif %}>
+
             {% csrf_token %}
-            <div>
-                <h3> <i class="fa fa-chevron-circle-right" aria-hidden="true"></i> &nbsp; Complete your order </h3>
-                <p> Please enter in the relevant information below. </p>
+                        <div>
+                            <h3> <i class="fa fa-chevron-circle-right" aria-hidden="true"></i> &nbsp; Complete your order </h3>
+                            <p> Please enter in the relevant information below. </p>
+            
+                            <hr>
+            
+                            <br>
+            
+                            <div class="form-field">
+                                <input class="form-control validate" name="email" id="email" type="email" placeholder="Email address*" autocomplete="off" value="{{shipping_address.email}}" required>
+                            </div>
+            
+                            <br>
+            
+                            <div class="form-field">
+                                <input class="form-control validate" name="address1" id="address1" type="text" placeholder="Address 1*" autocomplete="off" value="{{shipping_address.address1}}" required>
+                            </div>
+            
+                            <br>
+            
+                            <div class="form-field">
+                                <input class="form-control" name="address2" id="address2" type="text" placeholder="Address 2 (Optional)" autocomplete="off" value="{{shipping_address.address2}}">
+                            </div>
+            
+                            <br>
+            
+                            <div class="form-field">
+                                <input class="form-control validate" name="city" id="city" type="text" placeholder="City*" autocomplete="off" value="{{shipping_address.city}}" required>
+                            </div>
+                            
+                            <div class="form-field">
+                                <input class="form-control" name="state" id="state" type="text" placeholder="State (Optional)" autocomplete="off" value="{{shipping_address.state}}">
+                            </div>
+            
+                            <br>
+            
+                            <div class="form-field">
+                                <input class="form-control" name="zipcode" id="zipcode" type="text" placeholder="Zip code (Optional)" autocomplete="off" value="{{shipping_address.zipcode}}">
+                            </div>
+            
+                        </div>
+            
+                        <br>
+                            
+                            
+                            
+                            {% if cart.get_total_price == 0 or has_subscription %}
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">Proceed</button>
+                            {% else %}
+                            <div id="paypal-button-container"></div>
+                            {% endif %}
 
-                <hr>
-
-                {{ form|crispy}}
-
-            {% if cart.get_total_price == 0 or has_subscription %}
-                <button type="submit" class="btn btn-primary w-100 btn-lg">Proceed</button>
-            {% else %}
-                <div id="paypal-button-container"></div>
-            {% endif %}
-
-            <script src="https://www.paypal.com/sdk/js?client-id=AaNstFac8unMt64wavaD1zAZk6NfJpp1BelJv_hK6-cS56Xt9LJ34-h9c5dAbGJtIOsAVIE3VHyj9zk8&currency=USD&intent=capture&enable-funding=venmo" data-sdk-integration-source="integrationbuilder"></script>
+            <script src="https://www.paypal.com/sdk/js?client-id=AaNstFac8unMt64wavaD1zAZk6NfJpp1BelJv_hK6-cS56Xt9LJ34-h9c5dAbGJtIOsAVIE3VHyj9zk8&currency={{ cart.get_currency }}&intent=capture&enable-funding=venmo" data-sdk-integration-source="integrationbuilder"></script>
 
         </form>
 
@@ -106,7 +145,7 @@
                 purchase_units: [
                     {
                         amount: {
-                            currency_code: "USD",
+                            currency_code: "{{ cart.get_currency }}",
                             value: {{cart.get_total_price}}
                         }
                     }

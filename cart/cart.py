@@ -18,9 +18,10 @@ class Cart:
         del self.session['session-key']
         self.session.modified = True
 
-    def add(self, course):
+    def add(self, course, price, currency):
         course_id = str(course.id)
-        self.cart[course_id] = {'price': str(course.price)}
+        self.cart[course_id] = {'price': str(price),
+                                'currency': currency}
         self.session.modified = True
 
     def delete(self, course_id):
@@ -47,7 +48,12 @@ class Cart:
             yield item
 
     def get_total_price(self):
-        return sum(int(course['price']) for course in self.cart.values())
+        return sum(Decimal(course['price']) for course in self.cart.values())
+    
+    def get_currency(self):
+        if len(self.cart) == 0:
+            return 'USD'
+        return self.cart[list(self.cart.keys())[0]]['currency']
     
     def exists(self, course):
         for item in self.cart.values():

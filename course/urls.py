@@ -18,18 +18,24 @@ urlpatterns = [
     path('<int:course_id>/lesson/<int:lesson_id>/add_content/', AddContent.as_view(), name='add_content'),
     path('content/<int:content_id>/', views.view_content, name='view_content'),
     path('<int:course_id>/download_content', views.download_course_content, name='download_course_content'),
-    path('<int:course_id>/<int:lesson_id>/download_content', views.download_course_content, name='download_lesson_content'),
+    path('<int:course_id>/<int:lesson_id>/download_content', views.download_course_content,
+         name='download_lesson_content'),
     path('<int:course_id>/lesson/<int:lesson_id>/delete/', views.delete_lesson, name='delete_lesson'),
     path('<int:course_id>/content/<int:content_id>/delete/', views.delete_content, name='delete_content'),
-    
+    path('<int:course_id>/content/<int:content_id>/publish/', views.publish_content, name='publish_content'),
+    path('<int:course_id>/content/<int:content_id>/hide/', views.hide_content, name='hide_content'),
+
     path('<int:course_id>/create_assignment/', views.create_assignment, name='create_assignment'),
     path('<int:course_id>/assignments/', views.list_assignments, name='list_assignments'),
     path('<int:course_id>/assignment/<int:assignment_id>/', views.view_assignment, name='view_assignment'),
     path('<int:course_id>/assignment/<int:assignment_id>/delete/', views.delete_assignment, name='delete_assignment'),
-    path('<int:course_id>/assignment/submission/<int:submission_id>/', views.view_assignment_submission, name='view_submission'),
-    path('<int:course_id>/assignment/<int:assignment_id>/publish/', views.publish_assignment, name='publish_assignment'),
+    path('<int:course_id>/assignment/submission/<int:submission_id>/', views.view_assignment_submission,
+         name='view_submission'),
+    path('<int:course_id>/assignment/<int:assignment_id>/publish/', views.publish_assignment,
+         name='publish_assignment'),
     path('<int:course_id>/assignment/<int:assignment_id>/unpublish/', views.hide_assignment, name='hide_assignment'),
-    path('<int:course_id>/assignment/submission/<int:submission_id>/download', views.download_assignment_submission_content, name='download_submission_content'),
+    path('<int:course_id>/assignment/submission/<int:submission_id>/download',
+         views.download_assignment_submission_content, name='download_submission_content'),
 
     path('<int:course_id>/list_quiz/', views.list_quizzes, name='list_quizzes'),
     path('<int:course_id>/quiz/', views.add_quiz, name='create_quiz'),
@@ -40,16 +46,20 @@ urlpatterns = [
     path('<int:course_id>/quiz/<int:quiz_id>/attempt', views.attempt_quiz, name='attempt_quiz'),
     path('<int:course_id>/quiz/<int:quiz_id>/view_attempts', views.view_attempts, name='view_attempts'),
     path('quiz/<int:quiz_id>/<int:student_id>/view_attempt', views.view_quiz_attempt, name='view_quiz_attempt'),
-    
+
     path('<int:course_id>/progress/', views.view_course_progress, name='progress'),
     path('<int:course_id>/grades/', views.list_grades, name='grades'),
     path('<int:course_id>/grades/add/', views.create_extra_grade, name='create_extra_grade'),
     path('<int:course_id>/grades/download_sample_file', views.download_sample_file, name='download_sample_file'),
-    
+
     path('search/<str:search_keyword>', views.course_search, name='course_search'),
-    
+
     path('<int:course_id>/list_students/', views.list_students, name='list_students'),
     path('<int:course_id>/view_user_grades/<int:user_id>/', views.view_user_grades, name='view_user_grades'),
     path('<int:course_id>/view_user_progress/<int:user_id>/', views.view_user_progress, name='view_user_progress'),
     
+    path('<int:user_id>/view_certificates/', views.view_certificates, name='view_certificates'),
+    path('<int:course_id>/generate_certificate/', views.generate_certificate, name='generate_certificate'),
+    path('<int:course_id>/certificate/<int:student_id>/', views.generate_certificate, name='generate_certificate_for_student'),
+
 ]

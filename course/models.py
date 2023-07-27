@@ -11,6 +11,7 @@ class Course(models.Model):
     description = models.TextField()
     thumbnail = models.ImageField(upload_to='course-thumbnails/')
     price = models.IntegerField(default=0)
+    currency = models.CharField(max_length=3, default='USD')
 
     def __str__(self):
         return self.name
@@ -18,7 +19,7 @@ class Course(models.Model):
 
 class Lesson(models.Model):
     course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=30)
 
 
 @deconstructible
@@ -30,10 +31,10 @@ class PathAndRename(object):
         ext = filename.split('.')[-1]
         filename = filename.split('.')[0]
         if instance.pk:
-            return filename
+            filename = f'{filename}_{instance.pk}'
         else:
-            filename = '{}_{}.{}'.format(filename, uuid.uuid4().hex, ext)
-        return os.path.join(self.path, filename)
+            filename = f'{filename}_{uuid.uuid4().hex}'
+        return os.path.join(self.path, f'{filename}.{ext}')
 
 
 class Content(models.Model):
@@ -54,10 +55,10 @@ class Content(models.Model):
         (VIDEO, 'Video'),
         (OTHER, 'Other'),
     ]
-    
+
     content_path = PathAndRename("contents/")
 
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     lesson = models.ForeignKey(Lesson, related_name='contents', on_delete=models.CASCADE)
     content_type = models.CharField(
         max_length=10,
@@ -75,6 +76,7 @@ class Content(models.Model):
     video_type = models.CharField(max_length=100, blank=True)
     other_content = models.FileField(upload_to=content_path, blank=True)
     viewed_by = models.ManyToManyField('user.UserModel', related_name='viewed_contents', blank=True)
+    is_published = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.audio_content:
@@ -106,20 +108,23 @@ class LessonProgress(models.Model):
 class Assignment(models.Model):
     course = models.ForeignKey(Course, related_name='assignments', on_delete=models.CASCADE)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_assignments', on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     description = models.TextField()
     due_date = models.DateTimeField()
     creation_date = models.DateTimeField(auto_now_add=True)
     attemptsAllowed = models.PositiveIntegerField(default=1)
     is_published = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['id']
 
 
 class AssignmentFile(models.Model):
     assignent_path = PathAndRename("assignments/")
-    
+
     file = models.FileField(upload_to=assignent_path, null=True, blank=True)
     assignment = models.ForeignKey(Assignment, related_name='files', on_delete=models.CASCADE)
-    
+
 
 class AssignmentSubmission(models.Model):
     assignment = models.ForeignKey(Assignment, related_name='submissions', on_delete=models.CASCADE)
@@ -138,7 +143,7 @@ class AssignmentSubmission(models.Model):
 
 class SubmissionFile(models.Model):
     submission_path = PathAndRename("submission/")
-    
+
     file = models.FileField(upload_to=submission_path, null=True, blank=True)
     submission = models.ForeignKey(AssignmentSubmission, related_name='files', on_delete=models.CASCADE)
 
@@ -146,7 +151,7 @@ class SubmissionFile(models.Model):
 class Quiz(models.Model):
     course = models.ForeignKey(Course, related_name='quizzes', on_delete=models.CASCADE)
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_quizzes', on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=50)
     description = models.TextField()
     attempts_allowed = models.IntegerField(default=1)
     due_date = models.DateTimeField()
@@ -155,6 +160,7 @@ class Quiz(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Question(models.Model):
     QUIZ_TYPES = (
@@ -169,6 +175,7 @@ class Question(models.Model):
 
     def __str__(self):
         return self.question_text
+
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, related_name='choices', on_delete=models.CASCADE)
@@ -214,9 +221,22 @@ class OtherGrade(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     grade = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField()
 
     class Meta:
         unique_together = ('student', 'name')
+
+
+class Certificate(models.Model):
+    certificate_path = PathAndRename("certificates/")
+    
+    id = models.CharField(max_length=100, primary_key=True, default=str(uuid.uuid4().hex), editable=False)
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    certificate_image = models.ImageField(upload_to=certificate_path, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Certificate for {self.student.get_full_name()} - {self.course.name}"
