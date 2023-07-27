@@ -175,31 +175,26 @@
 
         //let url = '/quiz/' + quiz_id + '/' + student_id + '/view_attempt/'
 
-        /*fetch(url, {
+        fetch(url, {
             'method': 'GET',
         }).then(response => response.json())
         .then(questions => {
-            const questionsDiv = $('div');
+            const responseDiv = $('#responseDiv');
+            responseDiv.empty();
             for (let question of questions) {
-                const questionDiv = $('div');
+                const questionDiv = $('<div></div>');
                 let question_text = question.question_text
                 let answer_text = question.answer_text
                 questionDiv.append($('<p>').text(question_text))
                 questionDiv.append($('<p>').text(answer_text))
-                questionDiv.append($('</div>'))
-                questionsDiv.append(questionDiv)
+                responseDiv.append(questionDiv)
             }
-            questionsDiv.append($('</div>'))
-            $('#responseDiv').append(questionsDiv)
         }).catch((error) => {
             console.log(error)
-            const questionsDiv = $('div');
-            questionsDiv.append($('<p>').text('Failed to get attemp'))
-            questionsDiv.append($('</div>'))
-            $('#responseDiv').append(questionsDiv)
-        });*/
-
-
+            const responseDiv = $('#responseDiv');
+            responseDiv.empty();
+            responseDiv.append($('<p>').text('Failed to get attempt'))
+        });
 
         // Show the modal
         $(modal).modal('show');
@@ -210,7 +205,8 @@
     function closeViewAttemptModal() {
         // Get the modal element
         const modal = document.getElementById('viewAttemptModal');
-
+        const responseDiv = $('#responseDiv');
+        responseDiv.empty();
         // Hide the modal
         $(modal).modal('hide');
     }
@@ -234,7 +230,7 @@
                 <p><strong>Quiz Name:</strong> <span id="quizName"></span></p>
                 <p><strong>Due Date:</strong> <span id="dueDate"></span></p>
                 <p><strong>Submission Date:</strong> <span id="submissionDate"></span></p>
-                <div id="#responseDiv"></div>
+                <div id="responseDiv"></div>
 
             </div>
             <div class="modal-footer">
