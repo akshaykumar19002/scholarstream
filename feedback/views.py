@@ -33,6 +33,8 @@ def add_review(request, course_id):
             review.rating = 5 - review.rating + 1
             review.save()
             return redirect('feedback:review', course_id=course.id)
+        else:
+            return render(request, 'feedback/add_review.html', {'course': course, 'form': form, 'instructor': instructor})
     else:
         form = ReviewForm()
 

@@ -16,3 +16,9 @@ class ReviewForm(forms.ModelForm):
         widgets = {
             'comment': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
+        
+    def clean_comment(self):
+        comment = self.cleaned_data.get('comment')
+        if len(comment) < 10:
+            raise forms.ValidationError("Comment too short")
+        return comment
