@@ -4,10 +4,8 @@ django-storages
 pillow
 psycopg2-binary
 asgiref
-boto3
 botocore
 crispy-bootstrap5
-Django
 django-crispy-forms
 django-environ
 django-mathfilters

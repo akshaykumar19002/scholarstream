@@ -122,7 +122,7 @@ def user_profile(request):
 
     username_form = UpdateUsernameForm(request.POST or None, instance=user)
     password_form = ChangePasswordForm(request.POST or None)
-    address_form = AddUpdateAddressForm(request.POST or None, address)
+    address_form = AddUpdateAddressForm(request.POST or None, instance=address)
 
     print(request.POST)
     if request.method == 'POST':

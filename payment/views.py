@@ -116,6 +116,8 @@ def subscription(request):
         if len(subscription) > 0:
             subscription = subscription[0]
             subscription.type = SUBSCRIPTION_PRICING[subscription.subscription_type][3]
+            if not subscription.is_active:
+                subscription = None
         else:
             subscription = None
     return render(request, 'payment/subscription/subscription_form.html', {'subs': subs, 'subscription': subscription} )
