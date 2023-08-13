@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.core.files import File
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from .forms import *
 from .models import *
@@ -1001,6 +1002,7 @@ def generate_certificate(request, course_id, student_id=None):
         mail_subject = 'Your Certificate for ' + course.name +' is Ready on Scholar Stream!'
         message = render_to_string('course/certificate/certificate_generated_email.html', {
             'student': student,
+            'course': course,
             'instructor': request.user,
             'domain': current_site.domain,
             'certificate_link': certificate.certificate_image.url,
