@@ -12,6 +12,8 @@ from django.http import FileResponse
 from datetime import datetime
 from django.utils import timezone
 from django.core.files import File
+from django.template.loader import render_to_string
+from django.contrib.sites.shortcuts import get_current_site
 
 from .forms import *
 from .models import *
@@ -995,6 +997,15 @@ def generate_certificate(request, course_id, student_id=None):
             print(cert_path, certificate.certificate_image.url, filename)
         if os.path.exists(cert_path):
             os.remove(cert_path)
+        current_site = get_current_site(request)
+        mail_subject = 'Your Certificate for ' + course.name +' is Ready on Scholar Stream!'
+        message = render_to_string('course/certificate/certificate_generated_email.html', {
+            'student': student,
+            'instructor': request.user,
+            'domain': current_site.domain,
+            'certificate_link': certificate.certificate_image.url,
+        })
+        student.email_user(mail_subject, message=message, html_message=message)
     return redirect('course:list_students', course_id)
 
 

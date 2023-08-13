@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Add any additional CSS styling here */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 15px;
+            color: #ffffff;
+            background-color: #007BFF;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Congratulations!</h2>
+        <p>Dear {{ user.first_name }},</p>
+        <p>We are thrilled to inform you that your request to become an instructor at <strong>Scholar Stream</strong> has been approved! We're excited to have you onboard and look forward to the wonderful courses you'll contribute to our community.</p>
+
+        <p>You can now start creating and managing your courses. To get started, click the button below:</p>
+        <a href="http://{{ domain }}/">Go to Your Dashboard</a>
+
+        <p>If you need any help or have questions, feel free to reach out to our support team. We're here to assist you every step of the way.</p>
+        <p>Once again, welcome to the <strong>Scholar Stream</strong> instructor community!</p>
+        <p>Warm regards,</p>
+        <p>The Scholar Stream Team</p>
+    </div>
+</body>
+</html>

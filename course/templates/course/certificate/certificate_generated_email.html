@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Congratulations, {{ student.first_name }}!</h2>
+
+<p>Dear {{ student.first_name }},</p>
+
+<p>We're thrilled to announce that you have successfully completed the [Course Name] on Scholar Stream. Your dedication and hard work have truly paid off!</p>
+
+<p>Your instructor, {{ instructor.first_name }}, has generated a certificate of completion to recognize your achievement. You can showcase this certificate on your resume, LinkedIn profile, or any other professional platforms to highlight your learning journey and accomplishments.</p>
+
+<a href="{{ certificate_link }}" class="button">Download Your Certificate</a>
+
+<p>If you have any questions or need further assistance, please feel free to reach out to our support team or your instructor.</p>
+
+<p>We hope to see you in another course soon. Keep up the great work and continue your journey of learning with Scholar Stream!</p>
+
+<p>Warm regards,</p>
+<p>The Scholar Stream Team</p>
+
+</body>
+</html>

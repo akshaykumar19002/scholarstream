@@ -1,14 +1,38 @@
-{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
 
-Hi,
+<h2>Welcome to Scholar Stream!</h2>
+<p>Dear {{ user.first_name }},</p>
 
-Thank you for registering on our website.
+<p>We're thrilled to have you on board. Before you dive into the world of knowledge, we need to verify your email address to ensure the security and authenticity of your account.</p>
 
-Please click on the link below to activate your account.
+<a href="http://{{ domain }}{% url 'email-verification' uidb64=uid token=token %}" class="button">Activate Your Account</a>
 
-http://{{ domain }}{% url 'email-verification' uidb64=uid token=token %}
+<p>By verifying your account, you will gain full access to all our courses, tutorials, and community discussions. If the above link doesn't work, copy and paste the following URL into your browser:</p>
+
+<p>http://{{ domain }}{% url 'email-verification' uidb64=uid token=token %}</p>
 
 
-{% endautoescape %}
+<p>If you did not sign up for Scholar Stream or believe this email was sent to you in error, please disregard this message.</p>
 
-{% comment %} https://{{ domain }}{% url 'email-verification' uidb64=uid token=token %} {% endcomment %}
+<p>For any questions or support needs, please reach out to our dedicated team at <a href="mailto:{{support_email}}">{{support_email}}</a>.</p>
+
+<p>Thank you for choosing Scholar Stream as your learning companion. Let's embark on this journey of discovery together!</p>
+
+<p>Warm regards,</p>
+<p>The Scholar Stream Team</p>
+
+</body>
+</html>

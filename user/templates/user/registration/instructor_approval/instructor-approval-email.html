@@ -1,14 +1,38 @@
-{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
 
-Hi,
+<p>Dear Admin,</p>
 
-{{ user.username }} has requested to become an instructor.
+<p>We have received a new application from {{ user.first_name }} seeking approval to become an instructor on Scholar Stream.</p>
 
-Please click on the link below to approve their request.
+<p><strong>Instructor Details:</strong></p>
+<ul>
+    <li><strong>Name:</strong> {{ user.get_full_name }}</li>
+    <li><strong>Email:</strong> {{ user.email }} </li>
+</ul>
 
-http://{{ domain }}{% url 'instructor-approval' uidb64=uid token=token %}
+<a href="http://{{ domain }}{% url 'instructor-approval' uidb64=uid token=token %}" class="button">Approve Application</a>
 
+<p>Kindly review their application and take the necessary action. Let's continue our journey to provide quality education on Scholar Stream!</p>
 
-{% endautoescape %}
+<p>If you have any queries or require further information, you can reach out directly to [Instructor's Email Address] or contact our support team.</p>
 
-{% comment %} https://{{ domain }}{% url 'instructor-approval' uidb64=uid token=token %} {% endcomment %}
+<p>Thank you for your attention and prompt action!</p>
+
+<p>Warm regards,</p>
+<p>The Scholar Stream Team</p>
+
+</body>
+</html>

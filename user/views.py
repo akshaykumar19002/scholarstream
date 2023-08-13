@@ -18,6 +18,9 @@ from django.contrib.auth import get_user_model
 
 from .forms import *
 from .token import user_tokenizer_generate
+import environ
+
+env = environ.Env()
 
 class Register(View):
     
@@ -36,14 +39,15 @@ class Register(View):
             user.save()
 
             current_site = get_current_site(request)
-            mail_subject = 'User Verification Email'
+            mail_subject = 'Activate Your Learning Account Now!'
             message = render_to_string('user/registration/email-verification.html', {
                 'user': user,
                 'domain': current_site.domain,
                 'uid': urlsafe_base64_encode(force_bytes(user.id)),
                 'token': user_tokenizer_generate.make_token(user),
+                'support_email': env('SUPPORT_EMAIL')
             })
-            user.email_user(mail_subject, message)
+            user.email_user(mail_subject, message=message, html_message=message)
 
             return redirect('email-verification-sent')
         return render(request, 'user/registration/register.html', {'form': form})
@@ -82,15 +86,16 @@ def email_verification(request, uidb64, token):
         elif user.user_type == 'I':
             admins = User.objects.filter(user_type='A')
             current_site = get_current_site(request)
-            mail_subject = 'User Approval Email'
+            mail_subject = 'New Instructor Application: ' + user.get_full_name() + ' Awaits Approval on Scholar Stream'
             message = render_to_string('user/registration/instructor_approval/instructor-approval-email.html', {
                 'user': user,
                 'domain': current_site.domain,
                 'uid': urlsafe_base64_encode(force_bytes(user.id)),
                 'token': user_tokenizer_generate.make_token(user),
+                'support_email': env('SUPPORT_EMAIL')
             })
             for admin in admins:
-                admin.email_user(mail_subject, message)
+                admin.email_user(mail_subject, message=message, html_message=message)
         user.save()
         return redirect('email-verification-success')
     else:
@@ -274,6 +279,17 @@ def instructor_approval(request, uidb64, token):
     if user is not None and user_tokenizer_generate.check_token(user, token) and user.is_active:
         user.is_approved = True
         user.save()
+        current_site = get_current_site(request)
+        mail_subject = 'Your Instructor Approval Request at Scholar Stream has been Approved!'
+        message = render_to_string('user/registration/instructor_approval/instructor-approval-success-email.html', {
+            'user': user,
+            'domain': current_site.domain,
+            'uid': urlsafe_base64_encode(force_bytes(user.id)),
+            'token': user_tokenizer_generate.make_token(user),
+            'support_email': env('SUPPORT_EMAIL')
+        })
+        user.email_user(mail_subject, message=message, html_message=message)
+        user.email_user
         return redirect('instructor-approval-success')
     else:
         return redirect('instructor-approval-failed')
