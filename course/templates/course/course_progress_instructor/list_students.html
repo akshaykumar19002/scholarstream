@@ -51,7 +51,11 @@
                 {% if student.certificate %}
                     <td class="text-center"><a href="{{ student.certificate.certificate_image.url }}" target="_blank">View Certificate</a></td>
                 {% else %}
-                    <td class="text-center"><a href="{% url 'course:generate_certificate_for_student' course.id student.id %}">Generate Certificate</a></td>
+                    {% if student.has_subscription %}
+                        <td class="text-center"><a href="{% url 'course:generate_certificate_for_student' course.id student.id %}">Generate Certificate</a></td>
+                    {% else %}
+                        <td class="text-center">No subscription</td>
+                    {% endif %}
                 {% endif %}
             </tr>
         {% empty %}

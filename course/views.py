@@ -887,6 +887,7 @@ def list_students(request, course_id):
     students = get_user_model().objects.filter(courses__id=course_id, user_type='S')
     for student in students:
         student.certificate = Certificate.objects.filter(student=student, course=course).first()
+        student.has_subscription = check_if_user_has_subscription(student)
     return render(request, 'course/course_progress_instructor/list_students.html',
                   {'students': students, 'course': course})
 
