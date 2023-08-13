@@ -9,6 +9,10 @@ urlpatterns = [
     path('email_verification_sent/', views.email_verification_sent, name='email-verification-sent'),
     path('email_verification_success/', views.email_verification_success, name='email-verification-success'),
     path('email_verification_failed/', views.email_verification_failed, name='email-verification-failed'),
+    
+    path('instructor_approval/<str:uidb64>/<str:token>', views.instructor_approval, name='instructor-approval'),
+    path('instructor_approval_success/', views.instructor_approval_success, name='instructor-approval-success'),
+    path('instructor_approval_failed/', views.instructor_approval_failed, name='instructor-approval-failed'),
 
     path('login/', views.Login.as_view(), name='login'),
     path('logout/', views.user_logout, name='logout'),

@@ -17,6 +17,12 @@ class UserRegisterForm(UserCreationForm):
         self.fields['last_name'].required = True
         self.fields['email'].required = True
         self.fields['user_type'].required = True
+        
+        # Only display 'Student' and 'Instructor' as choices for user_type
+        self.fields['user_type'].choices = [
+            ('S', 'Student'),
+            ('I', 'Instructor'),
+        ]
 
     # email validation
     def clean_email(self):

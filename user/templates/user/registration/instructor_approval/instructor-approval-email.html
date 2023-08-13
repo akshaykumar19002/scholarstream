@@ -1,0 +1,14 @@
+{% autoescape off %}
+
+Hi,
+
+{{ user.username }} has requested to become an instructor.
+
+Please click on the link below to approve their request.
+
+http://{{ domain }}{% url 'instructor-approval' uidb64=uid token=token %}
+
+
+{% endautoescape %}
+
+{% comment %} https://{{ domain }}{% url 'instructor-approval' uidb64=uid token=token %} {% endcomment %}

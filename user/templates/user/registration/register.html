@@ -24,6 +24,10 @@
 
         <form method='POST'>
 
+            {% if error %}
+                <p class="bg-danger text-light p-2">!! {{ error }}</p>
+            {% endif %}
+
             {% csrf_token %}
             {{ form|crispy }}
 

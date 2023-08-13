@@ -29,6 +29,8 @@ class Register(View):
         form = UserRegisterForm(request.POST)
 
         if form.is_valid():
+            if form.cleaned_data['user_type'] == 'A':
+                return render(request, 'user/registration/register.html', {'form': form, 'error': 'Invalid user type.'})
             user = form.save()
             user.is_active = False
             user.save()
@@ -62,18 +64,33 @@ class Login(View):
             
             user = authenticate(request, username=username, password=password)
             if user:
+                if not user.is_approved:
+                    return render(request, 'user/login.html', {'form': form, 'error': 'Your account is not approved yet.'})
                 login(request, user)
                 next_url = request.GET.get('next', reverse('course:list'))
                 return HttpResponseRedirect(next_url)
         return render(request, 'user/login.html', {'form': form})
 
 def email_verification(request, uidb64, token):
-
     uid = force_str(urlsafe_base64_decode(uidb64))
     user = User.objects.get(pk=uid)
 
     if user is not None and user_tokenizer_generate.check_token(user, token):
         user.is_active = True
+        if user.user_type == 'S':
+            user.is_approved = True
+        elif user.user_type == 'I':
+            admins = User.objects.filter(user_type='A')
+            current_site = get_current_site(request)
+            mail_subject = 'User Approval Email'
+            message = render_to_string('user/registration/instructor_approval/instructor-approval-email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.id)),
+                'token': user_tokenizer_generate.make_token(user),
+            })
+            for admin in admins:
+                admin.email_user(mail_subject, message)
         user.save()
         return redirect('email-verification-success')
     else:
@@ -249,3 +266,20 @@ def email_user(subject, user, template, context):
     message = render_to_string(template, context)
     user.email_user(mail_subject, message)
     
+
+def instructor_approval(request, uidb64, token):
+    uid = force_str(urlsafe_base64_decode(uidb64))
+    user = User.objects.get(pk=uid)
+
+    if user is not None and user_tokenizer_generate.check_token(user, token) and user.is_active:
+        user.is_approved = True
+        user.save()
+        return redirect('instructor-approval-success')
+    else:
+        return redirect('instructor-approval-failed')
+
+def instructor_approval_success(request):
+    return render(request, 'user/registration/instructor_approval/instructor-approval-success.html')
+
+def instructor_approval_failed(request):
+    return render(request, 'user/registration/instructor_approval/instructor-approval-failed.html')

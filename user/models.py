@@ -7,9 +7,11 @@ class UserModel(AbstractUser):
     TYPES = [
         ('S', 'Student'),
         ('I', 'Instructor'),
+        ('A', 'Admin'),
     ]
     user_type = models.CharField(max_length=2, choices=TYPES, default='S')
     courses = models.ManyToManyField(Course, blank=True)
+    is_approved = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'User'
