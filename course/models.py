@@ -84,6 +84,19 @@ class Content(models.Model):
         if self.video_content:
             self.video_type = mimetypes.guess_type(self.video_content.name)[0]
         super().save(*args, **kwargs)
+        
+    def delete(self, *args, **kwargs):
+        if self.image_content:
+            self.image_content.delete(save=False)
+        if self.pdf_content:
+            self.pdf_content.delete(save=False)
+        if self.audio_content:
+            self.audio_content.delete(save=False)
+        if self.video_content:
+            self.video_content.delete(save=False)
+        if self.other_content:
+            self.other_content.delete(save=False)
+        super(Content, self).delete(*args, **kwargs)
 
     class Meta:
         ordering = ['order']
@@ -124,6 +137,10 @@ class AssignmentFile(models.Model):
 
     file = models.FileField(upload_to=assignent_path, null=True, blank=True)
     assignment = models.ForeignKey(Assignment, related_name='files', on_delete=models.CASCADE)
+    
+    def delete(self, *args, **kwargs):
+        self.file.delete(save=False)
+        super(AssignmentFile, self).delete(*args, **kwargs)
 
 
 class AssignmentSubmission(models.Model):
@@ -146,6 +163,10 @@ class SubmissionFile(models.Model):
 
     file = models.FileField(upload_to=submission_path, null=True, blank=True)
     submission = models.ForeignKey(AssignmentSubmission, related_name='files', on_delete=models.CASCADE)
+    
+    def delete(self, *args, **kwargs):
+        self.file.delete(save=False)
+        super(SubmissionFile, self).delete(*args, **kwargs)
 
 
 class Quiz(models.Model):
@@ -237,6 +258,10 @@ class Certificate(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     certificate_image = models.ImageField(upload_to=certificate_path, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
+    
+    def delete(self, *args, **kwargs):
+        self.certificate_image.delete(save=False)
+        super(Certificate, self).delete(*args, **kwargs)
 
     def __str__(self):
         return f"Certificate for {self.student.get_full_name()} - {self.course.name}"
