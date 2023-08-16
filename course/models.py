@@ -5,23 +5,6 @@ import mimetypes
 from django.utils.deconstruct import deconstructible
 from django.conf import settings
 
-
-class Course(models.Model):
-    name = models.CharField(max_length=40)
-    description = models.TextField()
-    thumbnail = models.ImageField(upload_to='course-thumbnails/')
-    price = models.IntegerField(default=0)
-    currency = models.CharField(max_length=3, default='USD')
-
-    def __str__(self):
-        return self.name
-    
-
-class Lesson(models.Model):
-    course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)
-    title = models.CharField(max_length=30)
-
-
 @deconstructible
 class PathAndRename(object):
     def __init__(self, sub_path):
@@ -35,6 +18,27 @@ class PathAndRename(object):
         else:
             filename = f'{filename}_{uuid.uuid4().hex}'
         return os.path.join(self.path, f'{filename}.{ext}')
+
+class Course(models.Model):
+    thumbnail_path = PathAndRename("thumbnails/")
+        
+    name = models.CharField(max_length=40)
+    description = models.TextField()
+    thumbnail = models.ImageField(upload_to=thumbnail_path)
+    price = models.IntegerField(default=0)
+    currency = models.CharField(max_length=3, default='USD')
+
+    def __str__(self):
+        return self.name
+    
+    def delete(self, *args, **kwargs):
+        self.thumbnail.delete()
+        super(Course, self).delete(*args, **kwargs)
+    
+
+class Lesson(models.Model):
+    course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)
+    title = models.CharField(max_length=30)
 
 
 class Content(models.Model):

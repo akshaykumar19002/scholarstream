@@ -1,0 +1,116 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% block content %}
+<style>
+    #chat-box {
+        width: 400px;
+        height: 500px;
+        border: 1px solid #ccc;
+        margin: 20px auto;
+        padding: 20px;
+    }
+
+    #messages {
+        height: 400px;
+        overflow-y: scroll;
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
+
+    #student-typing-indicator, #instructor-typing-indicator {
+        display: none;
+        font-weight: bold;
+    }
+</style>
+
+<div id="chat-box">
+    <div id="messages">
+        {% for message in messages %}
+            <p>{{ message.author.user_type }}: {{ message.content }}</p>
+        {% endfor %}
+    </div>
+    <br>
+    {% if user.user_type == 'I' %}
+        <span id="student-typing-indicator">Student is typing...</span>
+    {% else %}
+        <span id="instructor-typing-indicator">Instructor is typing...</span>
+    {% endif %}
+    <input type="text" id="message-input">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+    window.addEventListener("load", (event) => {
+        scrollToBottom();
+    });
+
+    const chatSocket = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/chat/'
+        + {{ chat_id }}
+        + '/'
+    );
+
+    function scrollToBottom() {
+        const messages = document.querySelector('#messages');
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log(data)
+        const message = data['message'];
+        const typing = data['typing'];
+        const role = data['role'];
+
+        if (message) {
+            document.querySelector("#messages").innerHTML += `<p>${role}: ${message}</p>`;
+        }
+
+        const studentTypingIndicator = document.querySelector("#student-typing-indicator");
+        const instructorTypingIndicator = document.querySelector("#instructor-typing-indicator");
+
+        if (typing !== undefined) {
+            if (role === 'S') {
+                if (typing) {
+                    studentTypingIndicator.style.display = "block";
+                } else {
+                    studentTypingIndicator.style.display = "none";
+                }
+            } else if (role === 'I') {
+                if (typing) {
+                    instructorTypingIndicator.style.display = "block";
+                } else {
+                    instructorTypingIndicator.style.display = "none";
+                }
+            }
+        }
+        scrollToBottom();
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    function sendMessage() {
+        const messageInput = document.querySelector("#message-input");
+        chatSocket.send(JSON.stringify({
+            'message': messageInput.value
+        }));
+        messageInput.value = '';
+    }
+
+    let typingTimeout;
+    document.querySelector("#message-input").addEventListener("keyup", function() {
+        clearTimeout(typingTimeout);
+        chatSocket.send(JSON.stringify({'typing': true}));
+        typingTimeout = setTimeout(stopTyping, 2000);
+    });
+
+    function stopTyping() {
+        chatSocket.send(JSON.stringify({'typing': false}));
+    }
+</script>
+
+{% endblock %}

@@ -38,6 +38,7 @@
             <th class="text-center">Progress</th>
             <th class="text-center">Grades</th>
             <th class="text-center">Certificate</th>
+            <th class="text-center">Action</th>
         </tr>
     </thead>
     <tbody>
@@ -57,6 +58,17 @@
                         <td class="text-center">No subscription</td>
                     {% endif %}
                 {% endif %}
+                <td class="text-center">
+                    <div class="btn-group dropend">
+                        <a class="p-2" role="button" id="dropdownMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span><i class="fa fa-ellipsis-v" aria-hidden="true"></i></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'chat:contact_options_for_student' course.id student.id %}">Contact Student</a></li>
+                            <li><a class="dropdown-item" href="">Block Student</a></li>
+                        </ul>
+                    </div>
+                </td>
             </tr>
         {% empty %}
             <tr>

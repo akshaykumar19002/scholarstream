@@ -25,4 +25,5 @@ urlpatterns = [
     path('payment/', include(('payment.urls', 'payment'), namespace='payment')),
     path('paypal/', include('paypal.standard.ipn.urls')),
     path('feedback/', include(('feedback.urls'))),
+    path('chat/', include(('chat.urls'))),
 ]

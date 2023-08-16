@@ -1,0 +1,16 @@
+<!-- create_room.html -->
+
+<form method="post" action="{% url 'chat:create_chat_room' %}">
+    {% csrf_token %}
+    <label for="room_name">Room Name:</label>
+    <input type="text" name="room_name" required>
+    
+    <label for="instructor_id">Select Instructor:</label>
+    <select name="instructor_id">
+        {% for instructor in instructors %}  <!-- You will need to pass 'instructors' context to the template -->
+        <option value="{{ instructor.id }}">{{ instructor.username }}</option>
+        {% endfor %}
+    </select>
+    
+    <button type="submit">Create Room</button>
+</form>

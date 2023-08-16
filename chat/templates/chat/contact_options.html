@@ -1,0 +1,66 @@
+{% extends 'course/dashboard/base_dashboard.html' %}
+
+{% block content %}
+
+<div class="container">
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card m-5">
+                <div class="card-body">
+                    {% if is_instructor %}
+                        <h5 class="card-title">Contact Student by Email</h5>
+                        <p class="card-text">You can just directly email the student with your queries.</p>
+                        <a href="{% url 'chat:contact_email_for_instructor' course.id student_id %}" class="btn btn-primary mt-2 w-100">Email Student</a>
+                    {% else %}
+                        <h5 class="card-title">Contact Instructor by Email</h5>
+                        <p class="card-text">You can just directly email the instructor with your queries.</p>
+                        <a href="{% url 'chat:contact_email' course.id %}" class="btn btn-primary mt-2 w-100">Email Instructor</a>                    
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card m-5">
+                <div class="card-body">
+                    {% if is_instructor %}
+                        <h5 class="card-title">Contact with Student by Chat</h5>
+                        <p class="card-text">You can just directly chat with student.</p>
+                        <div class="row">
+                            {% if last_chat %}
+                                <div class="col-md-5">
+                                    <a href="{% url 'chat:create_chat_room' course.id %}" class="btn btn-primary mt-2">Chat with Student</a>
+                                </div>
+                                <span class="col-md-2 mt-4">OR</span>
+                                <div class="col-md-5">
+                                    <a href="{% url 'chat:chat_room' last_chat.id course.id %}" class="btn btn-primary mt-2">Continue with an existing chat</a>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'chat:create_chat_room' course.id %}" class="btn btn-primary mt-2">Chat with Student</a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <h5 class="card-title">Contact with Instructor by Chat</h5>
+                        <p class="card-text">You can just directly chat with instructor with your queries.</p>
+                        <div class="row">
+                            {% if last_chat %}
+                                <div class="col-md-5">
+                                    <a href="{% url 'chat:create_chat_room' course.id %}" class="btn btn-primary mt-2">Chat with Instructor</a>
+                                </div>
+                                <span class="col-md-2 mt-4">OR</span>
+                                <div class="col-md-5">
+                                    <a href="{% url 'chat:chat_room' last_chat.id course.id %}" class="btn btn-primary mt-2">Continue with an existing chat</a>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'chat:create_chat_room' course.id %}" class="btn btn-primary mt-2">Chat with Instructor</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

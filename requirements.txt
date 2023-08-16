@@ -25,3 +25,7 @@ django-cors-headers
 geoip2
 django-ipware
 opencv-python-headless
+channels
+channels_redis
+daphne
+django-tinymce

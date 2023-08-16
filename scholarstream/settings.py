@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'daphne',
     'django.contrib.staticfiles',
     'storages',
     'user.apps.UserConfig',
@@ -54,6 +55,9 @@ INSTALLED_APPS = [
     'paypal.standard.ipn',
     'feedback.apps.FeedbackConfig',
     'corsheaders',
+    'channels',
+    'chat.apps.ChatConfig',
+    'tinymce',
 ]
 
 GEOIP_PATH = os.path.join(BASE_DIR, 'GeoLite2-Country.mmdb')
@@ -103,6 +107,23 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 WSGI_APPLICATION = 'scholarstream.wsgi.application'
 
+ASGI_APPLICATION = 'chat.routing.application'
+
+## Redis Channel
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('127.0.0.1', 6379)],
+#         },
+#     },
+# }
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
