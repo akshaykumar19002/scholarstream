@@ -16,9 +16,13 @@
 </style>
 <div class="container">
 
-    <h1>Unread Notifications</h1><hr>
+    {% if is_all %}
+        <h1>Notifications</h1><hr>
+    {% else %}
+        <h1>Unread Notifications</h1><hr>
+    {% endif %}
 
-    {% if not is_all and notifications %}
+    {% if not is_all %}
         <a href="{% url 'notifications:view_all_notifications' %}" class="btn btn-primary float-end">View all notifications</a>
     {% endif %}
 
