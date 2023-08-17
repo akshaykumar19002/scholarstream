@@ -4,3 +4,4 @@ venv
 scholarstream/.env
 .vscode
 static/admin
+generated-certificates/

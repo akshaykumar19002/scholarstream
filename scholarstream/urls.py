@@ -20,10 +20,11 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(('course.urls', 'course'), namespace='course')),
-    path('user/', include(('user.urls'))),
+    path('user/', include('user.urls')),
     path('cart/', include(('cart.urls', 'cart'), namespace='cart')),
     path('payment/', include(('payment.urls', 'payment'), namespace='payment')),
     path('paypal/', include('paypal.standard.ipn.urls')),
-    path('feedback/', include(('feedback.urls'))),
-    path('chat/', include(('chat.urls'))),
+    path('feedback/', include('feedback.urls')),
+    path('chat/', include('chat.urls')),
+    path('notifications/', include('notifications.urls')),
 ]

@@ -29,14 +29,10 @@
                         <div class="row">
                             {% if last_chat %}
                                 <div class="col-md-5">
-                                    <a href="{% url 'chat:create_chat_room' course.id %}" class="btn btn-primary mt-2">Chat with Student</a>
-                                </div>
-                                <span class="col-md-2 mt-4">OR</span>
-                                <div class="col-md-5">
                                     <a href="{% url 'chat:chat_room' last_chat.id course.id %}" class="btn btn-primary mt-2">Continue with an existing chat</a>
                                 </div>
                             {% else %}
-                                <a href="{% url 'chat:create_chat_room' course.id %}" class="btn btn-primary mt-2">Chat with Student</a>
+                                <p class="bg-warning">There are no existing chats with the student.</p>
                             {% endif %}
                         </div>
                     {% else %}

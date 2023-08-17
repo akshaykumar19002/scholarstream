@@ -20,6 +20,8 @@ from .forms import *
 from .token import user_tokenizer_generate
 import environ
 
+from notifications.utils import create_notification
+
 env = environ.Env()
 
 class Register(View):
@@ -37,6 +39,7 @@ class Register(View):
             user = form.save()
             user.is_active = False
             user.save()
+            create_notification(user, 'registration', 'Welcome to Scholar Stream')
 
             current_site = get_current_site(request)
             mail_subject = 'Activate Your Learning Account Now!'
@@ -152,6 +155,7 @@ def user_profile(request):
         if 'username_form' in request.POST:
             if username_form.is_valid():
                 username_form.save()
+                create_notification(user, 'username_changed', 'Your username has been updated successfully.')
             else:
                 context = {
                     'username_form': username_form,
@@ -170,6 +174,7 @@ def user_profile(request):
                     new_password = password_form.cleaned_data['newPassword']
                     user.set_password(new_password)
                     user.save()
+                    create_notification(user, 'password_changed', 'Your password has been changed successfully.')
                     user_logout(request)
                 else:
                     password_form.add_error('currentPassword', 'Current password is not correct')

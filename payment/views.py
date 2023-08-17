@@ -10,6 +10,7 @@ from .models import *
 from cart.cart import Cart
 from user.forms import AddUpdateAddressForm
 from payment.utils import check_if_user_has_subscription, convert_price
+from notifications.utils import create_notification
 
 from paypal.standard.forms import PayPalPaymentsForm
 
@@ -61,6 +62,7 @@ def complete_order(request):
                     order_item = OrderItem(course=item['course'], price=item['price'], order=order, user=request.user, currency=currency)
                     order_item.save()
                     get_user_model().objects.get(pk=request.user.id).courses.add(item['course'])
+                    create_notification(user=request.user, type='course_purchase', message='You have successfully enrolled to the course ' + item['course'].title, link=reverse('course:detail', kwargs={'pk': item['course']}))
                 
                 user = get_user_model().objects.get(id=request.user.id)
                 mail_subject = 'Course purchase confirmation'

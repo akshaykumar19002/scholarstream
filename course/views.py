@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse, reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -14,13 +14,13 @@ from django.utils import timezone
 from django.core.files import File
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
-from django.views.decorators.clickjacking import xframe_options_exempt
 
 from .forms import *
 from .models import *
 from cart.cart import Cart
 from course.utils import generate_certificate_image
 from payment.utils import check_if_user_has_subscription
+from notifications.utils import *
 
 import json
 import uuid
@@ -212,8 +212,8 @@ class AddContent(LoginRequiredMixin, View):
 
             max_order = lesson.contents.aggregate(models.Max('order'))['order__max']
             new_content.order = max_order + 1 if max_order is not None else 0
-
             new_content.save()
+            send_notifications_for_all_students(course, 'course_content', f'New content added to {course.name}', reverse('course:view_content', args=[new_content.id]))
             return redirect('course:view_lesson', course_id, lesson_id)
         else:
             print(form.errors)
@@ -397,6 +397,7 @@ def evaluate_assignment(request, grade):
     assignmentProgress.grade = grade
     assignmentProgress.submission = submission
     assignmentProgress.is_complete = True
+    create_notification(student, 'assignment_grade', 'Your assignment has been evaluated. Check your grades.', reverse('coruse:grades', kwargs={'course_id': submission.assignment.course.id}))
     assignmentProgress.save()
 
 
@@ -795,11 +796,12 @@ def create_extra_grade(request, course_id):
 
             with transaction.atomic():
                 for row in reader:
-                    student = User.objects.get(pk=int(row['student_id']))
+                    student = User.objects.get(pk=int(row['Student ID']))
                     grade = OtherGrade(student=student, grade=row['grade'], course=course,
                                        name=form.cleaned_data['name'],
                                        description=form.cleaned_data['description'])
                     grade.save()
+                    create_notification(student, 'extra_grade', 'An exta grade has been added.', reverse('course:grades', kwargs={'course_id': course.id}))
 
             return redirect('course:grades', course_id=course.id)
         else:
@@ -995,7 +997,7 @@ def generate_certificate(request, course_id, student_id=None):
             filename = os.path.basename(cert_path)
             certificate = Certificate(id=certificate_id, course=course, student=student, certificate_image=File(file, name=filename))
             certificate.save()
-            print(cert_path, certificate.certificate_image.url, filename)
+            create_notification(student, 'certificate', f"New certificate added for course {course.name}", certificate.certificate_image.url)
         if os.path.exists(cert_path):
             os.remove(cert_path)
         current_site = get_current_site(request)

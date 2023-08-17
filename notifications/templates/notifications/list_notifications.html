@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+
+    a {
+        text-decoration: none;
+        color: black;
+    }
+
+    a:hover {
+        text-decoration: none;
+        color: black;
+    }
+
+</style>
+<div class="container">
+
+    <h1>Unread Notifications</h1><hr>
+
+    {% if not is_all and notifications %}
+        <a href="{% url 'notifications:view_all_notifications' %}" class="btn btn-primary float-end">View all notifications</a>
+    {% endif %}
+
+    <br><br><br>
+
+    {% if notifications %}
+        {% for notification in notifications %}
+            {% if notification.link %}
+                <a href="{{ notification.link }}">
+            {% endif %}
+                <div class="card p-3">
+                    <span><strong>{{ notification.content_type|capfirst }}</strong>: {{ notification.message }} </span>
+                </div>
+            {% if notification.link %}
+                </a>
+            {% endif %}
+            <br>
+        {% endfor %}
+        <br>
+
+        <div class="mx-auto w-100">
+        <nav aria-label="">
+            <ul class="pagination justify-content-center">
+                {% if notifications.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ notifications.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+        
+                <!-- Optionally, you can show individual page numbers here -->
+        
+                {% if notifications.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ notifications.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ notifications.paginator.num_pages }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p>There are no unread notifications.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+

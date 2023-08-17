@@ -85,9 +85,11 @@
                 &nbsp;
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a type="button" role="button" href="{% url 'cart:summary' %}" class="nav-link nav-icon iconClass"> 
+                        <a type="button" role="button" href="{% url 'notifications:list_notifications' %}" class="nav-link nav-icon iconClass"> 
                             <i class="fa fa-bell" aria-hidden="true"> </i>
-                            <span class="badge badge-danger">0</span>
+                            {% if unread_notifications %}
+                                <span class="badge badge-danger">{{ unread_notifications|length }}</span>
+                            {% endif %}
                         </a>
                     </li>
                     <li class="nav-item">

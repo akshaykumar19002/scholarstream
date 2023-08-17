@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -8,6 +8,7 @@ import html
 from .models import Chat, Message
 from course.models import Course
 from .forms import EmailForm
+from notifications.utils import create_notification
 
 @login_required
 def chat_room(request, chat_id, course_id):
@@ -22,6 +23,7 @@ def create_chat_room(request, course_id):
     instructor = get_user_model().objects.filter(courses = course, user_type='I').first()
     Chat.objects.create(student=request.user, instructor=instructor)
     chat_room = Chat.objects.filter(student=request.user, instructor=instructor).first()
+    create_notification(instructor, 'chat', f'You have received a new chat request from {request.user.first_name}.', reverse('chat:chat_room', args=[chat_room.id, course.id]))
     return redirect('chat:chat_room', chat_room.id, course.id)
 
 
@@ -53,6 +55,7 @@ def contact_email(request, course_id, student_id=None):
             email.content = html.unescape(email.content)
             email.content = f"<p><strong>Email sent from {email.sender.first_name}</strong></p><hr><br><br><p>{email.content}</p>"
             email.recipient.email_user(email.subject, email.content, html_message=email.content)
+            create_notification(email.recipient, 'email', f'You have received an email from {email.sender.first_name}.')
             if student_id:
                 return redirect('chat:contact_options_for_student', course_id, student_id)
             return redirect('chat:contact_options', course_id)
