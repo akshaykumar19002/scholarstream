@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from course.models import Course
 
 
 class Notification(models.Model):
@@ -28,6 +29,7 @@ class Notification(models.Model):
         (REGISTRATION, 'Registration'),
         (PASSWORD_CHANGED, 'Password Changed'),
         (USERNAME_CHANGED, 'Username Changed'),
+        
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
@@ -43,3 +45,11 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.user.username + ":" + self.content_type
+
+
+class Announcement(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='announcements')
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    instructor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='announcements')

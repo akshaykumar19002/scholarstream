@@ -26,7 +26,7 @@
 		{% endif %}
 	</li>
 	<li class="nav-item">
-		<a class="nav-link" href="">Announcements</a>
+		<a class="nav-link" href="{% url 'notifications:view_all_announcements' course.id %}">Announcements</a>
 	</li>
 	{% if user.user_type == 'S' %}
 		<li class="nav-item">
