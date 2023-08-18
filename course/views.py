@@ -21,6 +21,7 @@ from cart.cart import Cart
 from course.utils import generate_certificate_image
 from payment.utils import check_if_user_has_subscription
 from notifications.utils import *
+from user.models import BlockedUsers
 
 import json
 import uuid
@@ -893,6 +894,8 @@ def list_students(request, course_id):
     for student in students:
         student.certificate = Certificate.objects.filter(student=student, course=course).first()
         student.has_subscription = check_if_user_has_subscription(student)
+        student.is_blocked = BlockedUsers.objects.filter(student=student, instructor=user, course=course).exists()
+
     return render(request, 'course/course_progress_instructor/list_students.html',
                   {'students': students, 'course': course})
 

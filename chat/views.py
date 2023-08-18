@@ -9,12 +9,14 @@ from .models import Chat, Message
 from course.models import Course
 from .forms import EmailForm
 from notifications.utils import create_notification
+from user.models import BlockedUsers
 
 @login_required
 def chat_room(request, chat_id, course_id):
     course = get_object_or_404(Course, pk=course_id)
     messages = Message.objects.filter(chat_id=chat_id).order_by('timestamp')
-    return render(request, 'chat/chat.html', {'chat_id': chat_id, 'course': course, 'messages': messages})
+    chat = Chat.objects.get(pk=chat_id)
+    return render(request, 'chat/chat.html', {'chat_id': chat_id, 'course': course, 'messages': messages, 'chat': chat})
 
 
 @login_required
@@ -42,6 +44,9 @@ def contact_options(request, course_id, student_id=None):
 @login_required
 def contact_email(request, course_id, student_id=None):
     course = get_object_or_404(Course, pk=course_id)
+    instructor = get_user_model().objects.filter(courses = course, user_type='I').first()
+    is_blocked = BlockedUsers.objects.filter(student=request.user, instructor=instructor, course=course).exists()
+
     if request.method == 'POST':
         form = EmailForm(request.POST)
         if form.is_valid():
@@ -60,4 +65,24 @@ def contact_email(request, course_id, student_id=None):
                 return redirect('chat:contact_options_for_student', course_id, student_id)
             return redirect('chat:contact_options', course_id)
     emailForm = EmailForm()
-    return render(request, 'chat/contact_email.html', {'form': emailForm, 'course': course})
+    return render(request, 'chat/contact_email.html', {'form': emailForm, 'course': course, 'is_blocked': is_blocked})
+
+
+@login_required
+def block_student(request, course_id, student_id):
+    if request.user.user_type == 'S':
+        return redirect('forbidden')
+    student = get_object_or_404(get_user_model(), pk=student_id)
+    course = get_object_or_404(Course, pk=course_id)
+    BlockedUsers.objects.get_or_create(student=student, course=course, instructor=request.user)
+    return redirect('course:list_students', course_id)
+    
+@login_required
+def unblock_student(request, course_id, student_id):
+    if request.user.user_type == 'S':
+        return redirect('forbidden')
+    student = get_object_or_404(get_user_model(), pk=student_id)
+    course = get_object_or_404(Course, pk=course_id)
+    get_object_or_404(BlockedUsers, student=student, course=course, instructor=request.user).delete()
+    return redirect('course:list_students', course_id)
+ 

@@ -18,3 +18,9 @@ class UserModel(AbstractUser):
 
     def __str__(self):
         return self.get_full_name() + ' - ' + self.user_type
+
+
+class BlockedUsers(models.Model):
+    student = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='blocked_courses')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    instructor = models.ForeignKey(UserModel, on_delete=models.CASCADE, related_name='blockers')

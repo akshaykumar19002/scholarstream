@@ -32,9 +32,40 @@
     <br>
     {% if user.user_type == 'I' %}
         <span id="student-typing-indicator">Student is typing...</span>
+        <br>
+        <span id="student-online-indicator" 
+        {% if chat.student_online %}
+            style="color:green;display:block;"  
+        {% else %} 
+            style="color:green;display:none;"  
+        {% endif %}
+        >Student is online</span>
+        <span id="student-offline-indicator" 
+        {% if not chat.student_online %}
+            style="color:red;display:block;"
+        {% else %}
+            style="color:red;display:none;"
+        {% endif %}
+        >Student is offline</span>
     {% else %}
         <span id="instructor-typing-indicator">Instructor is typing...</span>
+        <br>
+        <span id="instructor-online-indicator" 
+        {% if chat.instructor_online %}
+            style="color:green;display:block;"
+        {% else %}
+            style="color:green;display:none;"
+        {% endif %}
+        >Instructor is online</span>
+        <span id="instructor-offline-indicator" 
+        {% if not chat.instructor_online %}
+            style="color:red;display:block;"
+        {% else %}
+            style="color:red;display:none;"
+        {% endif %}
+        >Instructor is offline</span>
     {% endif %}
+
     <input type="text" id="message-input">
     <button onclick="sendMessage()">Send</button>
 </div>
@@ -86,6 +117,37 @@
                 }
             }
         }
+
+        const online = data['online'];
+        const studentOnlineIndicator = document.querySelector("#student-online-indicator");
+        const studentOfflineIndicator = document.querySelector("#student-offline-indicator");
+        const instructorOnlineIndicator = document.querySelector("#instructor-online-indicator");
+        const instructorOfflineIndicator = document.querySelector("#instructor-offline-indicator");
+
+        if (online !== undefined) {
+            {% if user.user_type == 'I' %}
+                if (role === 'S') {
+                    if (online) {
+                        studentOnlineIndicator.style.display = "block";
+                        studentOfflineIndicator.style.display = "none";
+                    } else {
+                        studentOnlineIndicator.style.display = "none";
+                        studentOfflineIndicator.style.display = "block";
+                    }
+                }
+            {% else %}
+                if (role === 'I') {
+                    if (online) {
+                        instructorOnlineIndicator.style.display = "block";
+                        instructorOfflineIndicator.style.display = "none";
+                    } else {
+                        instructorOnlineIndicator.style.display = "none";
+                        instructorOfflineIndicator.style.display = "block";
+                    }
+                }
+            {% endif %}
+        }
+
         scrollToBottom();
     };
 

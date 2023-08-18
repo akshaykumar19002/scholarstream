@@ -10,5 +10,6 @@ urlpatterns = [
     path('contact_options/<int:course_id>/<int:student_id>', contact_options, name='contact_options_for_student'),
     path('contact_email/<int:course_id>', contact_email, name='contact_email'),
     path('contact_email/<int:course_id>/<int:student_id>', contact_email, name='contact_email_for_instructor'),
-
+    path('block/<int:course_id>/<int:student_id>', block_student, name='block_student'),
+    path('unblock/<int:course_id>/<int:student_id>', unblock_student, name='unblock_student')
 ]

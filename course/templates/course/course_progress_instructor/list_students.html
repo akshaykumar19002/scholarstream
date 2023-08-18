@@ -65,7 +65,11 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'chat:contact_options_for_student' course.id student.id %}">Contact Student</a></li>
-                            <li><a class="dropdown-item" href="">Block Student</a></li>
+                            {% if student.is_blocked %}
+                                <li><a class="dropdown-item" href="{% url 'chat:unblock_student' course.id student.id %}">Unblock Student</a></li>
+                            {% else %}
+                                <li><a class="dropdown-item" href="{% url 'chat:block_student' course.id student.id %}">Block Student</a></li>
+                            {% endif %}
                         </ul>
                     </div>
                 </td>

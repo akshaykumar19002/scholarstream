@@ -28,15 +28,19 @@
         {% endif %}
         <hr><br>
 
-        <form method='POST'>
+        {% if is_blocked %}
+            <h4 class="bg-danger text-center p-3">!! You are blocked from sending emails.</h4>
+        {% else %}
+            <form method='POST'>
 
-            {% csrf_token %}
-            {{ form|crispy }}
+                {% csrf_token %}
+                {{ form|crispy }}
 
-            <br><br>
-            <button type="submit" class="btn btn-primary btn-lg w-100 btn-block p-2">Send Email</button>
-            <br>
-        </form>
+                <br><br>
+                <button type="submit" class="btn btn-primary btn-lg w-100 btn-block p-2">Send Email</button>
+                <br>
+            </form>
+        {% endif %}
 
     </div>
     <script>

@@ -3,6 +3,7 @@ import json
 from .models import Message
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
+from .models import Chat
 
 class ChatConsumer(AsyncWebsocketConsumer):
 
@@ -19,10 +20,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.group_name,
             self.channel_name
         )
+        
+        await self.mark_user_online(self.scope["user"])
 
         await self.accept()
 
     async def disconnect(self, close_code):
+        user = self.scope["user"]
+        if user.is_authenticated:
+            await self.mark_user_offline(user)
+        
         await self.channel_layer.group_discard(
             self.group_name,
             self.channel_name
@@ -79,3 +86,82 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def mark_messages_as_read(self, user):
         Message.objects.filter(chat_id=self.chat_id).exclude(author=user).update(read=True)
+
+    @database_sync_to_async
+    def get_role_for_chat(self, user):
+        try:
+            chat = Chat.objects.get(id=self.chat_id)
+            if user == chat.student:
+                return 'S'
+            elif user == chat.instructor:
+                return 'I'
+        except Chat.DoesNotExist:
+            print("Chat not found!")
+            return None
+
+    @database_sync_to_async
+    def update_user_online_status(self, user, online_status):
+        chat = Chat.objects.get(id=self.chat_id)
+        if user == chat.student:
+            chat.student_online = online_status
+        else:
+            chat.instructor_online = online_status
+        chat.save()
+
+    async def mark_user_online(self, user):
+        role = await self.get_role_for_chat(user)
+        if role:
+            if role == 'S':
+                print('student')
+            else:
+                print('instructor')
+            
+            # Update the database with the online status
+            await self.update_user_online_status(user, True)
+
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    'type': 'user_online',
+                    'online': True,
+                    'role': role
+                }
+            )
+            print("user online")
+
+    async def mark_user_offline(self, user):
+        role = await self.get_role_for_chat(user)
+        if role:
+            if role == 'S':
+                print('student')
+            else:
+                print('instructor')
+            
+            # Update the database with the offline status
+            await self.update_user_online_status(user, False)
+
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    'type': 'user_offline',
+                    'online': False,
+                    'role': role
+                }
+            )
+            print("user offline")
+            
+    async def user_online(self, event):
+        online = event['online']
+        role = event['role']
+        await self.send(text_data=json.dumps({
+            'online': online,
+            'role': role
+        }))
+
+    async def user_offline(self, event):
+        online = event['online']
+        role = event['role']
+        await self.send(text_data=json.dumps({
+            'online': online,
+            'role': role
+        }))

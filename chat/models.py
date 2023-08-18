@@ -4,6 +4,8 @@ from django.conf import settings
 class Chat(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='student_chats', on_delete=models.CASCADE)
     instructor = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='instructor_chats', on_delete=models.CASCADE)
+    student_online = models.BooleanField(default=False)
+    instructor_online = models.BooleanField(default=False)
 
 class Message(models.Model):
     chat = models.ForeignKey(Chat, related_name='messages', on_delete=models.CASCADE)
